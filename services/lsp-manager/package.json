@@ -1,0 +1,26 @@
+{
+  "name": "@shell/lsp-manager",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Language Server Protocol manager for Shell IDE",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc -w",
+    "start": "node dist/index.js",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1",
+    "vscode-languageserver-protocol": "^3.17.5",
+    "vscode-jsonrpc": "^8.2.0",
+    "which": "^4.0.0",
+    "glob": "^10.3.10"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/which": "^3.0.3",
+    "typescript": "^5.4.0"
+  }
+}

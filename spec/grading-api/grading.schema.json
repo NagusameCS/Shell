@@ -1,0 +1,230 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://shell.dev/schemas/grading/v1.json",
+  "title": "Shell Grading API Schema",
+  "description": "Schema for grading requests and responses. MIT Licensed.",
+  
+  "definitions": {
+    "GradingRequest": {
+      "type": "object",
+      "required": ["lesson_id", "language", "code"],
+      "properties": {
+        "lesson_id": {
+          "type": "string",
+          "description": "ID of the lesson being graded"
+        },
+        "language": {
+          "type": "string",
+          "description": "Programming language"
+        },
+        "code": {
+          "type": "string",
+          "description": "Student's code submission"
+        },
+        "project_files": {
+          "type": "array",
+          "description": "Additional project files",
+          "items": {
+            "$ref": "#/definitions/ProjectFile"
+          }
+        },
+        "classroom_id": {
+          "type": "string",
+          "description": "Optional classroom identifier"
+        },
+        "student_id": {
+          "type": "string",
+          "description": "Optional anonymous student identifier"
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 60000
+        },
+        "memory_limit_bytes": {
+          "type": "integer",
+          "minimum": 16777216
+        }
+      }
+    },
+    
+    "ProjectFile": {
+      "type": "object",
+      "required": ["path", "content"],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        }
+      }
+    },
+    
+    "GradingResult": {
+      "type": "object",
+      "required": ["submission_id", "lesson_id", "total_points", "max_points", "percentage", "test_results", "graded_at", "graded_by"],
+      "properties": {
+        "submission_id": {
+          "type": "string"
+        },
+        "lesson_id": {
+          "type": "string"
+        },
+        "total_points": {
+          "type": "number",
+          "minimum": 0
+        },
+        "max_points": {
+          "type": "number",
+          "minimum": 0
+        },
+        "percentage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "test_results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TestResult"
+          }
+        },
+        "feedback": {
+          "type": "string"
+        },
+        "graded_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "graded_by": {
+          "type": "string",
+          "enum": ["Local", "Cloud"]
+        }
+      }
+    },
+    
+    "TestResult": {
+      "type": "object",
+      "required": ["id", "name", "passed", "points_earned", "points_possible", "execution_time_ms"],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "actual_output": {
+          "type": "string"
+        },
+        "expected_output": {
+          "type": "string"
+        },
+        "points_earned": {
+          "type": "number",
+          "minimum": 0
+        },
+        "points_possible": {
+          "type": "number",
+          "minimum": 0
+        },
+        "execution_time_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "error": {
+          "type": "string"
+        },
+        "hidden": {
+          "type": "boolean"
+        }
+      }
+    },
+    
+    "PlagiarismResult": {
+      "type": "object",
+      "properties": {
+        "checked": {
+          "type": "boolean"
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "threshold": {
+          "type": "number"
+        },
+        "flagged": {
+          "type": "boolean"
+        },
+        "matches": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PlagiarismMatch"
+          }
+        }
+      }
+    },
+    
+    "PlagiarismMatch": {
+      "type": "object",
+      "properties": {
+        "submission_id": {
+          "type": "string"
+        },
+        "similarity": {
+          "type": "number"
+        },
+        "matched_lines": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "array",
+                "items": { "type": "integer" },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "match": {
+                "type": "array",
+                "items": { "type": "integer" },
+                "minItems": 2,
+                "maxItems": 2
+              }
+            }
+          }
+        }
+      }
+    },
+    
+    "GradingError": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "GRADING_TIMEOUT",
+            "GRADING_MEMORY",
+            "GRADING_COMPILE",
+            "GRADING_RUNTIME",
+            "GRADING_NETWORK",
+            "CLOUD_UNAVAILABLE",
+            "LICENSE_REQUIRED"
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "object"
+        }
+      }
+    }
+  }
+}

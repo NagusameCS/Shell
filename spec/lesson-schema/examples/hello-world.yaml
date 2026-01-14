@@ -1,0 +1,75 @@
+# Example Lesson: Hello World
+
+id: python-hello-world
+version: "1.0.0"
+title: "Hello World"
+description: "Write your first Python program"
+
+author:
+  name: "Shell Team"
+
+language: python
+difficulty: beginner
+
+tags:
+  - fundamentals
+  - first-program
+  - print
+
+prerequisites: []
+
+estimated_time_minutes: 5
+
+content:
+  explanation: |
+    # Your First Python Program
+    
+    Every programmer starts with "Hello, World!" — a simple program that 
+    displays a message on the screen.
+    
+    In Python, we use the `print()` function to display text:
+    
+    ```python
+    print("Hello, World!")
+    ```
+    
+    The text inside the quotes is called a **string**. The `print()` function
+    outputs this string to the console.
+    
+    ## Your Task
+    
+    Write a program that prints `Hello, World!` to the console.
+    
+  starter_code: |
+    # Write your first Python program here
+    
+    
+  solution: |
+    print("Hello, World!")
+    
+  hints:
+    - "Use the print() function"
+    - "Put your message in quotes"
+    - 'The message should be exactly "Hello, World!"'
+    
+  io_diagram:
+    outputs:
+      - label: "Console Output"
+        value: "Hello, World!"
+        description: "This is what should appear when you run the program"
+
+constraints:
+  max_time_ms: 1000
+  max_lines: 5
+
+grading:
+  passing_score: 100
+  
+  local_tests:
+    - id: hello-world
+      name: "Prints Hello, World!"
+      input: ""
+      expected_output: "Hello, World!"
+      output_type: exact
+      points: 100
+      hidden: false

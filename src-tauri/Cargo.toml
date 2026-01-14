@@ -1,0 +1,63 @@
+[package]
+name = "shell-ide"
+version = "0.1.0"
+description = "Education-first IDE for students and teachers"
+authors = ["Shell Contributors"]
+license = "MIT"
+repository = "https://github.com/NagusameCS/Shell"
+edition = "2021"
+rust-version = "1.70"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+# Tauri core
+tauri = { version = "2", features = [] }
+tauri-plugin-shell = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-process = "2"
+tauri-plugin-deep-link = "2"
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+
+# Database
+rusqlite = { version = "0.31", features = ["bundled"] }
+
+# Docker
+bollard = "0.16"
+futures-util = "0.3"
+
+# Utilities
+dirs = "5"
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+thiserror = "1"
+anyhow = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+directories = "5"
+
+# Security
+ring = "0.17"
+base64 = "0.22"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+
+# Teacher features (same binary, feature flags control availability)
+teacher = []
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

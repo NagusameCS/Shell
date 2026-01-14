@@ -1,0 +1,381 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://shell.dev/schemas/lesson/v1.json",
+  "title": "Shell Lesson Schema",
+  "description": "Schema for Shell IDE lesson files. MIT Licensed.",
+  "type": "object",
+  "required": ["id", "version", "title", "description", "language", "difficulty", "content"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for the lesson",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version of the lesson",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "title": {
+      "type": "string",
+      "description": "Human-readable title",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief description of the lesson",
+      "maxLength": 500
+    },
+    "author": {
+      "$ref": "#/definitions/Author"
+    },
+    "language": {
+      "type": "string",
+      "description": "Primary programming language",
+      "enum": ["python", "javascript", "typescript", "rust", "go", "java", "c", "cpp", "ruby", "csharp", "swift", "kotlin"]
+    },
+    "difficulty": {
+      "type": "string",
+      "description": "Difficulty level",
+      "enum": ["beginner", "intermediate", "advanced"]
+    },
+    "tags": {
+      "type": "array",
+      "description": "Categorization tags",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "prerequisites": {
+      "type": "array",
+      "description": "IDs of lessons that should be completed first",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "estimated_time_minutes": {
+      "type": "integer",
+      "description": "Estimated completion time",
+      "minimum": 1
+    },
+    "content": {
+      "$ref": "#/definitions/LessonContent"
+    },
+    "constraints": {
+      "$ref": "#/definitions/Constraints"
+    },
+    "grading": {
+      "$ref": "#/definitions/GradingConfig"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata",
+      "additionalProperties": true
+    }
+  },
+  "definitions": {
+    "Author": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "organization": {
+          "type": "string"
+        }
+      }
+    },
+    "LessonContent": {
+      "type": "object",
+      "required": ["explanation"],
+      "properties": {
+        "explanation": {
+          "type": "string",
+          "description": "Markdown content explaining the concept"
+        },
+        "starter_code": {
+          "type": "string",
+          "description": "Initial code provided to the student"
+        },
+        "solution": {
+          "type": "string",
+          "description": "Reference solution (hidden from students)"
+        },
+        "io_diagram": {
+          "$ref": "#/definitions/IoDiagram"
+        },
+        "hints": {
+          "type": "array",
+          "description": "Progressive hints revealed on request",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "resources": {
+          "type": "array",
+          "description": "Additional learning resources",
+          "items": {
+            "$ref": "#/definitions/Resource"
+          }
+        }
+      }
+    },
+    "IoDiagram": {
+      "type": "object",
+      "description": "Visual representation of input/output",
+      "properties": {
+        "inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IoExample"
+          }
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IoExample"
+          }
+        },
+        "diagram_type": {
+          "type": "string",
+          "enum": ["simple", "flowchart", "sequence"],
+          "default": "simple"
+        }
+      }
+    },
+    "IoExample": {
+      "type": "object",
+      "required": ["label", "value"],
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["string", "number", "boolean", "array", "object"]
+        }
+      }
+    },
+    "Resource": {
+      "type": "object",
+      "required": ["title", "url"],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["documentation", "video", "article", "reference"]
+        }
+      }
+    },
+    "Constraints": {
+      "type": "object",
+      "description": "Execution and code constraints",
+      "properties": {
+        "max_time_ms": {
+          "type": "integer",
+          "description": "Maximum execution time in milliseconds",
+          "minimum": 100,
+          "maximum": 60000
+        },
+        "max_memory_bytes": {
+          "type": "integer",
+          "description": "Maximum memory usage in bytes",
+          "minimum": 1048576
+        },
+        "allowed_imports": {
+          "type": "array",
+          "description": "Whitelist of allowed imports/modules",
+          "items": {
+            "type": "string"
+          }
+        },
+        "disallowed_imports": {
+          "type": "array",
+          "description": "Blacklist of disallowed imports/modules",
+          "items": {
+            "type": "string"
+          }
+        },
+        "required_symbols": {
+          "type": "array",
+          "description": "Functions/classes that must be defined",
+          "items": {
+            "type": "string"
+          }
+        },
+        "forbidden_symbols": {
+          "type": "array",
+          "description": "Functions/classes that must not be used",
+          "items": {
+            "type": "string"
+          }
+        },
+        "max_lines": {
+          "type": "integer",
+          "description": "Maximum lines of code",
+          "minimum": 1
+        },
+        "min_lines": {
+          "type": "integer",
+          "description": "Minimum lines of code",
+          "minimum": 1
+        }
+      }
+    },
+    "GradingConfig": {
+      "type": "object",
+      "description": "Grading and test configuration",
+      "properties": {
+        "local_tests": {
+          "type": "array",
+          "description": "Test cases that run locally",
+          "items": {
+            "$ref": "#/definitions/TestCase"
+          },
+          "default": []
+        },
+        "hidden_tests": {
+          "type": "array",
+          "description": "Test cases only run during cloud grading",
+          "items": {
+            "$ref": "#/definitions/TestCase"
+          }
+        },
+        "rubric": {
+          "type": "array",
+          "description": "Manual grading rubric items",
+          "items": {
+            "$ref": "#/definitions/RubricItem"
+          }
+        },
+        "auto_grade": {
+          "$ref": "#/definitions/AutoGradeConfig"
+        },
+        "passing_score": {
+          "type": "number",
+          "description": "Minimum score to pass (percentage)",
+          "minimum": 0,
+          "maximum": 100,
+          "default": 70
+        }
+      }
+    },
+    "TestCase": {
+      "type": "object",
+      "required": ["id", "name", "input", "expected_output", "points"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique test identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable test name"
+        },
+        "description": {
+          "type": "string",
+          "description": "What this test checks"
+        },
+        "input": {
+          "type": "string",
+          "description": "Input provided to the program"
+        },
+        "expected_output": {
+          "type": "string",
+          "description": "Expected output (exact match or pattern)"
+        },
+        "output_type": {
+          "type": "string",
+          "enum": ["exact", "contains", "regex", "json"],
+          "default": "exact"
+        },
+        "points": {
+          "type": "number",
+          "description": "Points awarded for passing",
+          "minimum": 0
+        },
+        "hidden": {
+          "type": "boolean",
+          "description": "Whether to hide this test from students",
+          "default": false
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "description": "Per-test timeout override"
+        }
+      }
+    },
+    "RubricItem": {
+      "type": "object",
+      "required": ["id", "name", "points"],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "points": {
+          "type": "number",
+          "minimum": 0
+        },
+        "criteria": {
+          "type": "array",
+          "description": "Specific criteria to check",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "AutoGradeConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "image": {
+          "type": "string",
+          "description": "Custom Docker image for grading"
+        },
+        "script": {
+          "type": "string",
+          "description": "Custom grading script"
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "description": "Total grading timeout"
+        }
+      }
+    }
+  }
+}
