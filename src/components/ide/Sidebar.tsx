@@ -21,6 +21,20 @@ import {
   WrapText,
   Save,
   Loader2,
+  Rocket,
+  Zap,
+  BookOpen,
+  GraduationCap,
+  Cloud,
+  FileCode,
+  Globe,
+  Gem,
+  Bug,
+  Coffee,
+  Target,
+  Layers,
+  Book,
+  Github,
 } from "lucide-react";
 
 // Loading fallback for lazy-loaded panels
@@ -234,7 +248,7 @@ const SHELL_DOCS = [
   {
     id: "getting-started",
     title: "Getting Started",
-    icon: "🚀",
+    iconType: "rocket" as const,
     content: `Welcome to Shell IDE - an education-first development environment.
 
 **Quick Start:**
@@ -253,7 +267,7 @@ const SHELL_DOCS = [
   {
     id: "features",
     title: "IDE Features",
-    icon: "⚡",
+    iconType: "zap" as const,
     content: `**Full-Featured IDE**
 • Syntax highlighting for 30+ languages
 • IntelliSense and auto-completion
@@ -272,7 +286,7 @@ Access via Settings (⌘,) or the sidebar:
   {
     id: "lessons",
     title: "Lessons & Learning",
-    icon: "📚",
+    iconType: "book" as const,
     content: `**Interactive Lessons**
 Shell includes a built-in lesson system:
 • Step-by-step instructions
@@ -292,7 +306,7 @@ See the lesson schema documentation.`,
   {
     id: "classroom",
     title: "Classroom Features",
-    icon: "🎓",
+    iconType: "graduation" as const,
     content: `**For Students**
 • Join classrooms with 6-character codes
 • Submit assignments directly in the IDE
@@ -312,7 +326,7 @@ See the lesson schema documentation.`,
   {
     id: "cloud",
     title: "Cloud & Sync",
-    icon: "☁️",
+    iconType: "cloud" as const,
     content: `**Cloud Features** (Education Plan)
 • Sync projects across devices
 • Access your code from anywhere
@@ -327,53 +341,74 @@ See the lesson schema documentation.`,
   },
 ];
 
+// Icon component map
+const DocIcon = ({ type, className }: { type: string; className?: string }) => {
+  const iconClass = className || "h-5 w-5";
+  switch (type) {
+    case "rocket": return <Rocket className={iconClass} />;
+    case "zap": return <Zap className={iconClass} />;
+    case "book": return <BookOpen className={iconClass} />;
+    case "graduation": return <GraduationCap className={iconClass} />;
+    case "cloud": return <Cloud className={iconClass} />;
+    case "python": return <FileCode className={iconClass} />;
+    case "javascript": return <Globe className={iconClass} />;
+    case "typescript": return <Gem className={iconClass} />;
+    case "rust": return <Bug className={iconClass} />;
+    case "go": return <Layers className={iconClass} />;
+    case "cpp": return <Zap className={iconClass} />;
+    case "java": return <Coffee className={iconClass} />;
+    case "csharp": return <Target className={iconClass} />;
+    default: return <Code className={iconClass} />;
+  }
+};
+
 // Language documentation data - static, no need to recreate
 const LANGUAGE_DOCS = [
   {
     name: "Python",
-    icon: "🐍",
+    iconType: "python",
     docs: "https://docs.python.org/3/",
     description: "Official Python documentation",
   },
   {
     name: "JavaScript",
-    icon: "📜",
+    iconType: "javascript",
     docs: "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
     description: "MDN JavaScript Guide",
   },
   {
     name: "TypeScript",
-    icon: "💎",
+    iconType: "typescript",
     docs: "https://www.typescriptlang.org/docs/",
     description: "TypeScript Handbook",
   },
   {
     name: "Rust",
-    icon: "🦀",
+    iconType: "rust",
     docs: "https://doc.rust-lang.org/book/",
     description: "The Rust Programming Language",
   },
   {
     name: "Go",
-    icon: "🐹",
+    iconType: "go",
     docs: "https://go.dev/doc/",
     description: "Go Documentation",
   },
   {
     name: "C++",
-    icon: "⚡",
+    iconType: "cpp",
     docs: "https://en.cppreference.com/w/",
     description: "C++ Reference",
   },
   {
     name: "Java",
-    icon: "☕",
+    iconType: "java",
     docs: "https://docs.oracle.com/en/java/",
     description: "Java SE Documentation",
   },
   {
     name: "C#",
-    icon: "🎯",
+    iconType: "csharp",
     docs: "https://learn.microsoft.com/en-us/dotnet/csharp/",
     description: "C# Documentation",
   },
@@ -446,7 +481,7 @@ const DocsPanel = memo(function DocsPanel() {
                 ← Back to docs
               </button>
               <div className="flex items-center gap-2 mb-3">
-                <span className="text-2xl">{activeDocContent.icon}</span>
+                <DocIcon type={activeDocContent.iconType} className="h-6 w-6 text-[var(--accent-color)]" />
                 <h3 className="text-lg font-medium text-white">{activeDocContent.title}</h3>
               </div>
               <div className="text-sm space-y-1">
@@ -465,7 +500,7 @@ const DocsPanel = memo(function DocsPanel() {
                   onClick={() => setActiveDoc(doc.id)}
                   className="flex w-full items-center gap-3 rounded-lg p-3 text-left transition-all hover:bg-white/5 group"
                 >
-                  <span className="text-xl">{doc.icon}</span>
+                  <DocIcon type={doc.iconType} className="h-5 w-5 text-sidebar-fg/70 group-hover:text-[var(--accent-color)]" />
                   <span className="text-sm font-medium text-sidebar-fg group-hover:text-[var(--accent-color)] transition-colors">
                     {doc.title}
                   </span>
@@ -487,7 +522,7 @@ const DocsPanel = memo(function DocsPanel() {
                   onClick={() => openDocs(lang.docs)}
                   className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-all hover:bg-white/5 group animate-fade-in"
                 >
-                  <span className="text-xl">{lang.icon}</span>
+                  <DocIcon type={lang.iconType} className="h-5 w-5 text-sidebar-fg/70 group-hover:text-[var(--accent-color)]" />
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium text-sidebar-fg group-hover:text-[var(--accent-color)] transition-colors">
                       {lang.name}
@@ -508,21 +543,21 @@ const DocsPanel = memo(function DocsPanel() {
                   onClick={() => openDocs("https://stackoverflow.com")}
                   className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-sidebar-fg/70 hover:bg-white/5 transition-colors"
                 >
-                  <span>📚</span>
+                  <Book className="h-4 w-4" />
                   <span>Stack Overflow</span>
                 </button>
                 <button
                   onClick={() => openDocs("https://github.com")}
                   className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-sidebar-fg/70 hover:bg-white/5 transition-colors"
                 >
-                  <span>🐙</span>
+                  <Github className="h-4 w-4" />
                   <span>GitHub</span>
                 </button>
                 <button
                   onClick={() => openDocs("https://devdocs.io")}
                   className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-sidebar-fg/70 hover:bg-white/5 transition-colors"
                 >
-                  <span>📖</span>
+                  <BookOpen className="h-4 w-4" />
                   <span>DevDocs</span>
                 </button>
               </div>

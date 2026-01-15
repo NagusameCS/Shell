@@ -9,7 +9,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
 import { useAppStore } from "@/stores/appStore";
 import { updateUserSettings, signOut } from "@/lib/firebase";
-import { UpgradeButton } from "@/components/UpgradeModal";
 import {
   ArrowLeft,
   User,
@@ -317,27 +316,24 @@ export function SettingsPage() {
                 </div>
               </div>
 
-              {/* Subscription status */}
+              {/* Educator status */}
               <div className="mb-6 rounded-xl bg-[#252526] p-6">
                 <h3 className="mb-4 text-lg font-medium text-white flex items-center gap-2">
                   <GraduationCap className="h-5 w-5" />
-                  Subscription
+                  Plan
                 </h3>
                 
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-white font-medium">
-                      {isEducator() ? "Education Plan" : "Free Plan"}
+                      {isEducator() ? "Educator Plan" : "Student Plan"}
                     </p>
                     <p className="text-sm text-[#6b7280]">
                       {isEducator()
                         ? "Cloud sync, classrooms, and more"
-                        : "Basic features, offline only"}
+                        : "Basic features for learning"}
                     </p>
                   </div>
-                  {!isEducator() && (
-                    <UpgradeButton />
-                  )}
                 </div>
               </div>
 

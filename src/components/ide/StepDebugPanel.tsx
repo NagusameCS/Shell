@@ -80,12 +80,10 @@ export function StepDebugPanel() {
 
   const currentStep = steps[currentStepIndex];
 
-  // Speed presets
+  // Speed presets - simplified to 0.5x and 1x only
   const speeds = [
     { label: "0.5x", value: 2000 },
     { label: "1x", value: 1000 },
-    { label: "2x", value: 500 },
-    { label: "4x", value: 250 },
   ];
 
   const getStepIcon = (type: ExecutionStep["type"]) => {
@@ -328,10 +326,10 @@ export function StepDebugPanel() {
               Watch your code execute line by line with detailed explanations of each operation.
             </p>
             <div className="space-y-2 text-xs text-white/40">
-              <p>✓ See variable values change in real-time</p>
-              <p>✓ Understand loop iterations step by step</p>
-              <p>✓ Track function calls and returns</p>
-              <p>✓ Identify errors before they crash</p>
+              <p>• See variable values change in real-time</p>
+              <p>• Understand loop iterations step by step</p>
+              <p>• Track function calls and returns</p>
+              <p>• Identify errors before they crash</p>
             </div>
             {!currentCode && (
               <p className="mt-4 text-xs text-yellow-400/70">
@@ -383,8 +381,9 @@ export function StepDebugPanel() {
             ))}
             
             {isComplete && (
-              <div className="text-center py-4 text-xs text-white/50">
-                ✅ Execution complete — {steps.length} steps executed
+              <div className="text-center py-4 text-xs text-green-400 flex items-center justify-center gap-1">
+                <CheckCircle className="h-3.5 w-3.5" />
+                Execution complete — {steps.length} steps
               </div>
             )}
           </div>

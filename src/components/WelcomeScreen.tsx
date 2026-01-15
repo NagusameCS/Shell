@@ -17,7 +17,6 @@ import { useAuthStore } from "@/stores/authStore";
 import { useRecentProjectsStore } from "@/stores/recentProjectsStore";
 import { signOut } from "@/lib/firebase";
 import { NewProjectModal } from "@/components/NewProjectModal";
-import { UpgradeButton } from "@/components/UpgradeModal";
 import { JoinClassroomButton } from "@/components/JoinClassroomModal";
 import {
   FolderOpen,
@@ -27,7 +26,6 @@ import {
   Github,
   Cloud,
   Settings,
-  Crown,
   X,
   GraduationCap,
 } from "lucide-react";
@@ -347,22 +345,6 @@ export function WelcomeScreen() {
             </div>
           )}
         </div>
-
-        {/* Upgrade prompt for free users */}
-        {user && !isEducator() && (
-          <div className="mt-6 w-full rounded-xl border border-[#fbbf24]/30 bg-[#fbbf24]/10 p-4">
-            <div className="flex items-center gap-2 text-[#fbbf24]">
-              <Crown className="h-4 w-4" />
-              <span className="font-medium">Upgrade to Education Plan</span>
-            </div>
-            <p className="mt-1 text-xs text-[#9ca3af]">
-              Get cloud sync, classroom management, and more.
-            </p>
-            <UpgradeButton className="mt-3 w-full rounded-lg bg-[#fbbf24] px-4 py-2 text-sm font-medium text-[#1e1e1e] hover:bg-[#f59e0b]">
-              Upgrade Now
-            </UpgradeButton>
-          </div>
-        )}
 
         {/* Clone from GitHub - front center at bottom */}
         <div className="mt-8 w-full">

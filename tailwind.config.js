@@ -82,16 +82,22 @@ export default {
           light: "#f87171",
           dark: "#dc2626",
         },
-        // UI colors
+        // UI colors - use CSS variables for theme support
         sidebar: {
-          bg: "#252526",
-          fg: "#cccccc",
-          hover: "#2a2d2e",
-          active: "#37373d",
+          bg: "var(--sidebar-bg)",
+          fg: "var(--sidebar-fg)",
+          hover: "var(--sidebar-hover)",
+          active: "var(--sidebar-active)",
         },
         panel: {
-          bg: "#1e1e1e",
-          border: "#3c3c3c",
+          bg: "var(--panel-bg)",
+          border: "var(--panel-border)",
+        },
+        editor: {
+          bg: "var(--editor-bg)",
+          fg: "var(--editor-fg)",
+          line: "var(--editor-line)",
+          selection: "var(--editor-selection)",
         },
       },
       fontFamily: {

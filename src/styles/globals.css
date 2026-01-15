@@ -29,6 +29,53 @@
     --accent-color: #22c55e;
     --accent-color-rgb: 34, 197, 94;
     --accent-color-hover: #16a34a;
+    
+    /* Component colors (dark default) */
+    --sidebar-bg: #252526;
+    --sidebar-fg: #cccccc;
+    --sidebar-hover: #2a2d2e;
+    --sidebar-active: #37373d;
+    --panel-bg: #1e1e1e;
+    --panel-border: #3c3c3c;
+    --editor-bg: #1e1e1e;
+    --editor-fg: #d4d4d4;
+    --editor-line: #2d2d2d;
+    --editor-selection: #264f78;
+  }
+
+  /* Light theme */
+  .light {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 10%;
+    --card: 0 0% 98%;
+    --card-foreground: 0 0% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+    --primary: 199 89% 48%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 10%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 10%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 85%;
+    --input: 0 0% 85%;
+    --ring: 199 89% 48%;
+    
+    /* Component colors (light) */
+    --sidebar-bg: #f3f3f3;
+    --sidebar-fg: #333333;
+    --sidebar-hover: #e8e8e8;
+    --sidebar-active: #d4d4d4;
+    --panel-bg: #ffffff;
+    --panel-border: #e0e0e0;
+    --editor-bg: #ffffff;
+    --editor-fg: #333333;
+    --editor-line: #f5f5f5;
+    --editor-selection: #add6ff;
   }
 
   * {

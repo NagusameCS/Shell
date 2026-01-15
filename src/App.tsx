@@ -75,13 +75,31 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
 }
 
 function App() {
-  const { initialized, initialize } = useAppStore();
+  const { initialized, initialize, theme } = useAppStore();
   const { user, isAuthenticated, isLoading, setUser, setLoading, isSessionValid, refreshSession, logout } = useAuthStore();
 
   // Initialize app
   useEffect(() => {
     initialize();
   }, [initialize]);
+
+  // Apply theme to document
+  useEffect(() => {
+    const root = document.documentElement;
+    
+    // Determine actual theme (handle system preference)
+    let actualTheme = theme;
+    if (theme === 'system') {
+      actualTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    
+    // Apply theme class
+    root.classList.remove('dark', 'light');
+    root.classList.add(actualTheme);
+    
+    // Store in localStorage for persistence
+    localStorage.setItem('shell-theme', theme);
+  }, [theme]);
 
   // Check session validity on mount
   useEffect(() => {

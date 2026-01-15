@@ -164,7 +164,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
         "comment",
         lineNum,
         trimmed,
-        `📝 Comment: "${trimmed.replace(patterns.commentPrefix, "").trim()}"`,
+        `Comment: "${trimmed.replace(patterns.commentPrefix, "").trim()}"`,
         {}
       ));
       continue;
@@ -177,7 +177,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
         "import",
         lineNum,
         trimmed,
-        `📦 Importing module: ${moduleName}`,
+        `Importing module: ${moduleName}`,
         { value: moduleName }
       ));
       continue;
@@ -192,7 +192,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
         "class_definition",
         lineNum,
         trimmed,
-        `🏗️ Defining class "${className}"`,
+        `Defining class "${className}"`,
         { value: className }
       ));
       continue;
@@ -208,7 +208,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
         "function_call",
         lineNum,
         trimmed,
-        `🔧 Defining ${context} "${name}" with parameters: (${params.join(", ") || "none"})`,
+        `Defining ${context} "${name}" with parameters: (${params.join(", ") || "none"})`,
         { value: { name, params } }
       ));
       continue;
@@ -224,7 +224,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
         "variable_declaration",
         lineNum,
         trimmed,
-        `📌 Declaring variable "${name}" of type ${varType || inferType(evaluatedValue)}`,
+        `=> Declaring variable "${name}" of type ${varType || inferType(evaluatedValue)}`,
         { after: { [name]: evaluatedValue } }
       ));
       
@@ -233,7 +233,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
           "variable_assignment",
           lineNum,
           trimmed,
-          `   ➜ Assigning value ${formatValue(evaluatedValue)} to "${name}"`,
+          `   => Assigning value ${formatValue(evaluatedValue)} to "${name}"`,
           { 
             before: { [name]: undefined },
             after: { [name]: evaluatedValue },
@@ -262,7 +262,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
             "loop_init",
             lineNum,
             trimmed,
-            `🔄 Starting FOR loop`,
+            `> Starting FOR loop`,
             {}
           ));
           
@@ -270,7 +270,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
             "variable_declaration",
             lineNum,
             init,
-            `   ➜ Initializing loop variable "${varName}" = ${formatValue(initValue)}`,
+            `   => Initializing loop variable "${varName}" = ${formatValue(initValue)}`,
             { after: { [varName]: initValue } }
           ));
         }
@@ -286,7 +286,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
           "condition_check",
           lineNum,
           condition,
-          `   ➜ Checking condition: ${condition.replace(state.loopVar, `${state.loopVar}(${currentValue})`)} = ${conditionResult}`,
+          `   => Checking condition: ${condition.replace(state.loopVar, `${state.loopVar}(${currentValue})`)} = ${conditionResult}`,
           { condition, result: conditionResult, value: currentValue }
         ));
         
@@ -295,7 +295,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
             "loop_iteration",
             lineNum,
             "",
-            `   ✋ Loop condition is FALSE — exiting loop`,
+            `   ! Loop condition is FALSE — exiting loop`,
             { result: false }
           ));
           break;
@@ -305,7 +305,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
           "loop_iteration",
           lineNum,
           "",
-          `   ✅ Loop condition is TRUE — entering iteration ${iter + 1}`,
+          `   Loop condition is TRUE — entering iteration ${iter + 1}`,
           { result: true }
         ));
         
@@ -320,7 +320,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
               "output",
               bodyLine.lineNum,
               bodyLine.trim(),
-              `   📤 OUTPUT: ${formatValue(evaluated)}`,
+              `   > OUTPUT: ${formatValue(evaluated)}`,
               { value: evaluated }
             ));
           }
@@ -336,7 +336,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
             "loop_update",
             lineNum,
             update,
-            `   ➜ Update: ${state.loopVar} changes from ${oldValue} to ${newValue} (${update})`,
+            `   => Update: ${state.loopVar} changes from ${oldValue} to ${newValue} (${update})`,
             { before: { [state.loopVar]: oldValue }, after: { [state.loopVar]: newValue } }
           ));
         }
@@ -358,7 +358,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
         "loop_init",
         lineNum,
         trimmed,
-        `🔄 Starting WHILE loop with condition: ${condition}`,
+        `> Starting WHILE loop with condition: ${condition}`,
         { condition }
       ));
       
@@ -369,7 +369,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
           "condition_check",
           lineNum,
           condition,
-          `   ➜ Checking: ${condition} = ${result}`,
+          `   => Checking: ${condition} = ${result}`,
           { condition, result }
         ));
         
@@ -378,7 +378,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
             "loop_iteration",
             lineNum,
             "",
-            `   ✋ Condition FALSE — exiting while loop`,
+            `   ! Condition FALSE — exiting while loop`,
             {}
           ));
           break;
@@ -388,7 +388,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
           "loop_iteration",
           lineNum,
           "",
-          `   ✅ Condition TRUE — executing loop body (iteration ${iter + 1})`,
+          `   Condition TRUE — executing loop body (iteration ${iter + 1})`,
           {}
         ));
       }
@@ -404,7 +404,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
         "condition_check",
         lineNum,
         trimmed,
-        `🤔 Evaluating IF condition: ${condition}`,
+        `? Evaluating IF condition: ${condition}`,
         { condition }
       ));
       
@@ -413,8 +413,8 @@ function parseCode(code: string, language: string): ExecutionStep[] {
         lineNum,
         "",
         result 
-          ? `   ✅ Condition is TRUE — entering IF block`
-          : `   ❌ Condition is FALSE — skipping IF block`,
+          ? `   Condition is TRUE — entering IF block`
+          : `   Condition is FALSE — skipping IF block`,
         { result }
       ));
       continue;
@@ -427,7 +427,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
         "condition_check",
         lineNum,
         trimmed,
-        `🤔 Evaluating ELSE IF condition: ${condition}`,
+        `? Evaluating ELSE IF condition: ${condition}`,
         { condition }
       ));
       continue;
@@ -439,7 +439,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
         "else_branch",
         lineNum,
         trimmed,
-        `↪️ Entering ELSE block (previous conditions were FALSE)`,
+        `Entering ELSE block (previous conditions were FALSE)`,
         {}
       ));
       continue;
@@ -453,7 +453,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
         "output",
         lineNum,
         trimmed,
-        `📤 OUTPUT: ${formatValue(evaluated)}`,
+        `> OUTPUT: ${formatValue(evaluated)}`,
         { value: evaluated }
       ));
       continue;
@@ -467,7 +467,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
         "return",
         lineNum,
         trimmed,
-        `↩️ Returning ${value ? formatValue(evaluated) : "void"} from function "${state.functionName || "main"}"`,
+        `Returning ${value ? formatValue(evaluated) : "void"} from function "${state.functionName || "main"}"`,
         { value: evaluated }
       ));
       continue;
@@ -484,7 +484,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
         "variable_assignment",
         lineNum,
         trimmed,
-        `📝 Updating "${name}": ${formatValue(oldValue)} ${operator} ${value} ➜ ${formatValue(newValue)}`,
+        `Updating "${name}": ${formatValue(oldValue)} ${operator} ${value} => ${formatValue(newValue)}`,
         { 
           before: { [name]: oldValue },
           after: { [name]: newValue }
@@ -500,7 +500,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
         "method_call",
         lineNum,
         trimmed,
-        `📞 Calling ${object ? `${object}.` : ""}${method}(${args.join(", ")})`,
+        `> Calling ${object ? `${object}.` : ""}${method}(${args.join(", ")})`,
         { value: { object, method, args } }
       ));
       continue;
@@ -512,7 +512,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
         "try_block",
         lineNum,
         trimmed,
-        `🛡️ Entering TRY block — exceptions will be caught`,
+        `Entering TRY block — exceptions will be caught`,
         {}
       ));
       continue;
@@ -525,7 +525,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
         "catch_block",
         lineNum,
         trimmed,
-        `🎣 CATCH block for ${exceptionType || "Exception"}`,
+        `> CATCH block for ${exceptionType || "Exception"}`,
         { value: exceptionType }
       ));
       continue;
@@ -537,7 +537,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
         "break",
         lineNum,
         trimmed,
-        `🛑 BREAK — exiting current loop immediately`,
+        `! BREAK — exiting current loop immediately`,
         {}
       ));
       continue;
@@ -549,7 +549,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
         "continue",
         lineNum,
         trimmed,
-        `⏭️ CONTINUE — skipping to next iteration`,
+        `CONTINUE — skipping to next iteration`,
         {}
       ));
       continue;
@@ -562,7 +562,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
         "array_access",
         lineNum,
         trimmed,
-        `📊 Accessing ${array}[${index}] = ${formatValue(value)}`,
+        `Accessing ${array}[${index}] = ${formatValue(value)}`,
         { value: { array, index, result: value } }
       ));
       continue;
@@ -574,7 +574,7 @@ function parseCode(code: string, language: string): ExecutionStep[] {
         "expression",
         lineNum,
         trimmed,
-        `⚡ Executing: ${trimmed}`,
+        `Executing: ${trimmed}`,
         {}
       ));
     }

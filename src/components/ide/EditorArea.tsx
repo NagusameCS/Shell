@@ -1,4 +1,4 @@
-import { useRef, useState, memo, useMemo, useCallback, lazy, Suspense } from "react";
+import { useRef, useState, memo, useMemo, useCallback, lazy, Suspense, useEffect } from "react";
 import type { OnMount } from "@monaco-editor/react";
 import { useEditorStore } from "@/stores/editorStore";
 import { useAppStore } from "@/stores/appStore";
@@ -7,6 +7,7 @@ import { X, Circle, Eye, Code, Columns, Play, Loader2 } from "lucide-react";
 import { PreviewPane } from "./PreviewPane";
 import { Command } from "@tauri-apps/plugin-shell";
 import type { editor } from "monaco-editor";
+import * as monaco from "monaco-editor";
 
 // Lazy load Monaco editor to improve initial load time
 const Editor = lazy(() => import("@monaco-editor/react").then(mod => ({ default: mod.default })));
@@ -32,10 +33,21 @@ export const EditorArea = memo(function EditorArea() {
   const settings = useAppStore((s) => s.settings);
   const project = useAppStore((s) => s.project);
   const togglePanel = useAppStore((s) => s.togglePanel);
+  const theme = useAppStore((s) => s.theme);
   
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const [viewMode, setViewMode] = useState<"code" | "preview" | "split">("code");
   const [isRunningFile, setIsRunningFile] = useState(false);
+  
+  // Update Monaco theme when app theme changes
+  useEffect(() => {
+    let actualTheme = theme;
+    if (theme === 'system') {
+      actualTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    const monacoTheme = actualTheme === 'light' ? 'shell-light' : 'shell-dark';
+    monaco.editor.setTheme(monacoTheme);
+  }, [theme]);
 
   // Memoize active file data lookup
   const activeFileData = useMemo(() => 
@@ -137,6 +149,7 @@ export const EditorArea = memo(function EditorArea() {
   const handleEditorMount: OnMount = useCallback((editor, monaco) => {
     editorRef.current = editor;
 
+    // Define dark theme
     monaco.editor.defineTheme("shell-dark", {
       base: "vs-dark",
       inherit: true,
@@ -156,7 +169,31 @@ export const EditorArea = memo(function EditorArea() {
         "editorWhitespace.foreground": "#3b3b3b",
       },
     });
-    monaco.editor.setTheme("shell-dark");
+    
+    // Define light theme
+    monaco.editor.defineTheme("shell-light", {
+      base: "vs",
+      inherit: true,
+      rules: [
+        { token: "comment", foreground: "008000" },
+        { token: "keyword", foreground: "0000ff" },
+        { token: "string", foreground: "a31515" },
+        { token: "number", foreground: "098658" },
+        { token: "function", foreground: "795e26" },
+      ],
+      colors: {
+        "editor.background": "#ffffff",
+        "editor.foreground": "#333333",
+        "editor.lineHighlightBackground": "#f5f5f5",
+        "editor.selectionBackground": "#add6ff",
+        "editorCursor.foreground": "#333333",
+        "editorWhitespace.foreground": "#d4d4d4",
+      },
+    });
+    
+    // Set initial theme based on document class
+    const isDark = document.documentElement.classList.contains('dark') || !document.documentElement.classList.contains('light');
+    monaco.editor.setTheme(isDark ? "shell-dark" : "shell-light");
   }, []);
 
   // Memoize editor change handler
@@ -320,7 +357,13 @@ export const EditorArea = memo(function EditorArea() {
                     onChange={handleEditorChange}
                     onMount={handleEditorMount}
                     options={editorOptions}
-                    theme="shell-dark"
+                    theme={(() => {
+                      let t = theme;
+                      if (t === 'system') {
+                        t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                      }
+                      return t === 'light' ? 'shell-light' : 'shell-dark';
+                    })()}
                     loading={<EditorLoading />}
                   />
                 </Suspense>

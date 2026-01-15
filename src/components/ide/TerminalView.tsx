@@ -104,7 +104,7 @@ export function TerminalView() {
 
   const printPrompt = (term: Terminal) => {
     const cwd = project?.path?.split("/").pop() || "~";
-    term.write(`\x1b[32m${cwd}\x1b[0m \x1b[34m❯\x1b[0m `);
+    term.write(`\x1b[32m${cwd}\x1b[0m \x1b[34m>\x1b[0m `);
   };
 
   const handleInput = (term: Terminal, data: string) => {
