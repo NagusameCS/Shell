@@ -2,6 +2,7 @@ import { useRef, useState, memo, useMemo, useCallback, lazy, Suspense, useEffect
 import type { OnMount } from "@monaco-editor/react";
 import { useEditorStore } from "@/stores/editorStore";
 import { useAppStore } from "@/stores/appStore";
+import { useStepDebugStore } from "@/stores/stepDebugStore";
 import { getMonacoLanguage, cn } from "@/lib/utils";
 import { X, Circle, Eye, Code, Columns, Play, Loader2 } from "lucide-react";
 import { PreviewPane } from "./PreviewPane";
@@ -34,7 +35,12 @@ export const EditorArea = memo(function EditorArea() {
   const togglePanel = useAppStore((s) => s.togglePanel);
   const theme = useAppStore((s) => s.theme);
   
+  // Step debugger state
+  const isExecuting = useStepDebugStore((s) => s.isExecuting);
+  const currentLine = useStepDebugStore((s) => s.currentLine);
+  
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const decorationsRef = useRef<string[]>([]);
   const [viewMode, setViewMode] = useState<"code" | "preview" | "split">("code");
   const [isRunningFile, setIsRunningFile] = useState(false);
   
@@ -47,6 +53,33 @@ export const EditorArea = memo(function EditorArea() {
     const monacoTheme = actualTheme === 'light' ? 'shell-light' : 'shell-dark';
     monaco.editor.setTheme(monacoTheme);
   }, [theme]);
+  
+  // Highlight current line during step debugging
+  useEffect(() => {
+    if (!editorRef.current) return;
+    
+    if (isExecuting && currentLine > 0) {
+      // Add line highlight decoration
+      decorationsRef.current = editorRef.current.deltaDecorations(
+        decorationsRef.current,
+        [{
+          range: new monaco.Range(currentLine, 1, currentLine, 1),
+          options: {
+            isWholeLine: true,
+            className: 'step-debug-line-highlight',
+            glyphMarginClassName: 'step-debug-glyph',
+            linesDecorationsClassName: 'step-debug-line-decoration',
+          }
+        }]
+      );
+      
+      // Scroll to the line
+      editorRef.current.revealLineInCenter(currentLine);
+    } else {
+      // Clear decorations when not debugging
+      decorationsRef.current = editorRef.current.deltaDecorations(decorationsRef.current, []);
+    }
+  }, [isExecuting, currentLine]);
 
   // Memoize active file data lookup
   const activeFileData = useMemo(() => 

@@ -175,6 +175,23 @@
     @apply border-l-2 bg-white/5;
     border-left-color: var(--accent-color);
   }
+  
+  /* Step debugger line highlighting */
+  .step-debug-line-highlight {
+    background-color: rgba(var(--accent-color-rgb), 0.2) !important;
+  }
+  
+  .step-debug-glyph {
+    background-color: var(--accent-color);
+    width: 4px !important;
+    margin-left: 3px;
+  }
+  
+  .step-debug-line-decoration {
+    background-color: var(--accent-color);
+    width: 3px !important;
+    margin-left: 3px;
+  }
 }
 
 @layer utilities {
