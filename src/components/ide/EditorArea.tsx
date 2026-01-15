@@ -187,14 +187,19 @@ export const EditorArea = memo(function EditorArea() {
   if (openFiles.length === 0) {
     return (
       <div className="flex flex-1 items-center justify-center bg-[#1e1e1e]">
-        <div className="text-center">
-          <img src="/favicon.svg" alt="Shell" className="mx-auto mb-4 h-16 w-16" />
+        <div className="text-center max-w-md">
+          <img src="/favicon.svg" alt="Shell" className="mx-auto mb-4 h-20 w-20" />
           <h2 className="mb-2 text-xl font-medium text-white">
             Welcome to Shell
           </h2>
-          <p className="text-sm text-[#6b7280]">
-            Open a file or lesson to start coding
+          <p className="text-sm text-[#6b7280] mb-6">
+            Select a file from the explorer to start coding
           </p>
+          <div className="text-xs text-[#4a4a4a] space-y-1">
+            <p><kbd className="bg-[#3c3c3c] px-1.5 py-0.5 rounded">⌘S</kbd> Save file</p>
+            <p><kbd className="bg-[#3c3c3c] px-1.5 py-0.5 rounded">⌘`</kbd> Toggle terminal</p>
+            <p><kbd className="bg-[#3c3c3c] px-1.5 py-0.5 rounded">⌘W</kbd> Close tab</p>
+          </div>
         </div>
       </div>
     );

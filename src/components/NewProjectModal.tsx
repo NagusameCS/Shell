@@ -739,7 +739,14 @@ export function NewProjectModal({
       handleClose();
     } catch (err) {
       console.error("Failed to create project:", err);
-      setError("Failed to create project. Please try again.");
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      if (errorMessage.includes("permission") || errorMessage.includes("denied")) {
+        setError("Permission denied. Please choose a different folder.");
+      } else if (errorMessage.includes("exists")) {
+        setError("A project with this name already exists.");
+      } else {
+        setError(`Failed to create project: ${errorMessage}`);
+      }
     } finally {
       setIsCreating(false);
     }

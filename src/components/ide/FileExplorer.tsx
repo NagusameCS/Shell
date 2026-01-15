@@ -408,6 +408,7 @@ function FileTreeItem({
 
   const handleOpenFile = useCallback(async () => {
     try {
+      console.log("Opening file:", file.path);
       const content = await readTextFile(file.path);
       const ext = getFileExtension(file.path);
       const language = getLanguageFromExtension(ext);
@@ -420,7 +421,16 @@ function FileTreeItem({
         modified: false,
       });
     } catch (error) {
-      console.error("Failed to open file:", error);
+      console.error("Failed to open file:", file.path, error);
+      // Show an alert for now - can be replaced with toast later
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes("permission") || errorMessage.includes("denied")) {
+        alert(`Cannot open file: Permission denied.\n\nPath: ${file.path}`);
+      } else if (errorMessage.includes("binary") || errorMessage.includes("valid UTF-8")) {
+        alert(`Cannot open file: This appears to be a binary file.\n\n${file.name}`);
+      } else {
+        alert(`Failed to open file: ${errorMessage}`);
+      }
     }
   }, [file.path, file.name, openFile]);
 
