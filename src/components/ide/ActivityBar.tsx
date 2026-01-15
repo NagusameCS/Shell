@@ -25,7 +25,7 @@ export const ActivityBar = memo(function ActivityBar() {
   // Use selectors to only subscribe to needed state
   const activeView = useAppStore((s) => s.activeView);
   const setActiveView = useAppStore((s) => s.setActiveView);
-  const isTeacher = useAppStore((s) => s.isTeacher);
+  const isEducator = useAppStore((s) => s.isEducator);
   const user = useAuthStore((s) => s.user);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   
@@ -43,12 +43,12 @@ export const ActivityBar = memo(function ActivityBar() {
       { id: "docs", icon: FileText, label: "Documentation" },
     ];
     
-    // Only show lessons for enrolled students or teachers
-    if (isEnrolledStudent || isTeacher) {
+    // Only show lessons for enrolled students or educators
+    if (isEnrolledStudent || isEducator) {
       baseItems.splice(1, 0, { id: "lessons", icon: BookOpen, label: "Lessons" });
     }
     return baseItems;
-  }, [isEnrolledStudent, isTeacher]);
+  }, [isEnrolledStudent, isEducator]);
 
   // Memoize click handlers
   const handleViewClick = useCallback((id: ViewId) => {
@@ -68,7 +68,7 @@ export const ActivityBar = memo(function ActivityBar() {
 
       <div className="flex-1" />
 
-      {isTeacher && (
+      {isEducator && (
         <button 
           className="activity-icon w-full" 
           title="Classroom"

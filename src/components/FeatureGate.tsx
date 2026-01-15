@@ -12,7 +12,7 @@ import { UpgradeButton } from "./UpgradeModal";
 
 interface FeatureGateProps {
   feature: string;
-  requiresTeacher?: boolean;
+  requiresEducator?: boolean;
   requiresCloud?: boolean;
   children: React.ReactNode;
   fallback?: React.ReactNode;
@@ -23,20 +23,20 @@ interface FeatureGateProps {
  */
 export const FEATURES = {
   // Free tier features (always available)
-  local_editor: { teacher: false, cloud: false, label: "Code Editor" },
-  local_execution: { teacher: false, cloud: false, label: "Local Execution" },
-  local_testing: { teacher: false, cloud: false, label: "Local Testing" },
-  local_lessons: { teacher: false, cloud: false, label: "Lesson Viewer" },
-  lsp_support: { teacher: false, cloud: false, label: "Language Support" },
+  local_editor: { educator: false, cloud: false, label: "Code Editor" },
+  local_execution: { educator: false, cloud: false, label: "Local Execution" },
+  local_testing: { educator: false, cloud: false, label: "Local Testing" },
+  local_lessons: { educator: false, cloud: false, label: "Lesson Viewer" },
+  lsp_support: { educator: false, cloud: false, label: "Language Support" },
   
-  // Teacher tier features
-  cloud_sync: { teacher: true, cloud: true, label: "Cloud Sync" },
-  classrooms: { teacher: true, cloud: true, label: "Classrooms" },
-  auto_grading: { teacher: true, cloud: true, label: "Auto-Grading" },
-  assignment_distribution: { teacher: true, cloud: true, label: "Assignments" },
-  analytics: { teacher: true, cloud: true, label: "Analytics" },
-  exam_mode: { teacher: true, cloud: false, label: "Exam Mode" },
-  plagiarism_detection: { teacher: true, cloud: true, label: "Plagiarism Check" },
+  // Educator tier features
+  cloud_sync: { educator: true, cloud: true, label: "Cloud Sync" },
+  classrooms: { educator: true, cloud: true, label: "Classrooms" },
+  auto_grading: { educator: true, cloud: true, label: "Auto-Grading" },
+  assignment_distribution: { educator: true, cloud: true, label: "Assignments" },
+  analytics: { educator: true, cloud: true, label: "Analytics" },
+  exam_mode: { educator: true, cloud: false, label: "Exam Mode" },
+  plagiarism_detection: { educator: true, cloud: true, label: "Plagiarism Check" },
 } as const;
 
 export type FeatureKey = keyof typeof FEATURES;
@@ -46,16 +46,16 @@ export type FeatureKey = keyof typeof FEATURES;
  */
 export function useFeatureAvailable(feature: FeatureKey): {
   available: boolean;
-  reason: "available" | "requires_teacher" | "requires_cloud" | "offline";
+  reason: "available" | "requires_educator" | "requires_cloud" | "offline";
 } {
-  const { isTeacher } = useAuthStore();
+  const { isEducator } = useAuthStore();
   const featureConfig = FEATURES[feature];
   
   // Check if we're online (simplified check)
   const isOnline = typeof navigator !== "undefined" ? navigator.onLine : true;
   
-  if (featureConfig.teacher && !isTeacher()) {
-    return { available: false, reason: "requires_teacher" };
+  if (featureConfig.educator && !isEducator()) {
+    return { available: false, reason: "requires_educator" };
   }
   
   if (featureConfig.cloud && !isOnline) {
@@ -70,15 +70,15 @@ export function useFeatureAvailable(feature: FeatureKey): {
  */
 export function FeatureGate({
   feature,
-  requiresTeacher = false,
+  requiresEducator = false,
   requiresCloud = false,
   children,
   fallback,
 }: FeatureGateProps) {
-  const { isTeacher } = useAuthStore();
+  const { isEducator } = useAuthStore();
   const isOnline = typeof navigator !== "undefined" ? navigator.onLine : true;
   
-  const canAccess = (!requiresTeacher || isTeacher()) && (!requiresCloud || isOnline);
+  const canAccess = (!requiresEducator || isEducator()) && (!requiresCloud || isOnline);
   
   if (canAccess) {
     return <>{children}</>;
@@ -90,7 +90,7 @@ export function FeatureGate({
   
   return (
     <FeatureLockedCard
-      requiresTeacher={requiresTeacher}
+      requiresEducator={requiresEducator}
       requiresCloud={requiresCloud}
       isOnline={isOnline}
     />
@@ -101,23 +101,23 @@ export function FeatureGate({
  * Locked feature placeholder
  */
 function FeatureLockedCard({
-  requiresTeacher,
+  requiresEducator,
   requiresCloud,
   isOnline,
 }: {
-  requiresTeacher: boolean;
+  requiresEducator: boolean;
   requiresCloud: boolean;
   isOnline: boolean;
 }) {
-  if (requiresTeacher) {
+  if (requiresEducator) {
     return (
       <div className="flex flex-col items-center justify-center rounded-xl border border-amber-500/30 bg-amber-500/5 p-8 text-center">
         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/10">
           <Crown className="h-8 w-8 text-amber-400" />
         </div>
-        <h3 className="mb-2 text-lg font-medium text-white">Teacher Feature</h3>
+        <h3 className="mb-2 text-lg font-medium text-white">Educator Feature</h3>
         <p className="mb-4 text-sm text-slate-400">
-          This feature is available with the Teacher plan
+          This feature is available with the Educator plan
         </p>
         <UpgradeButton />
       </div>
@@ -158,11 +158,11 @@ export function FeatureStatusBadge({ feature }: { feature: FeatureKey }) {
   }
   
   switch (reason) {
-    case "requires_teacher":
+    case "requires_educator":
       return (
         <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-1 text-xs text-amber-400">
           <Crown className="h-3 w-3" />
-          Teacher Only
+          Educator Only
         </span>
       );
     case "offline":
@@ -220,11 +220,11 @@ export function OfflineBanner() {
  * Cloud feature indicator
  */
 export function CloudFeatureIndicator({ className = "" }: { className?: string }) {
-  const { isTeacher } = useAuthStore();
+  const { isEducator } = useAuthStore();
   
   return (
     <div className={`flex items-center gap-2 text-xs ${className}`}>
-      {isTeacher() ? (
+      {isEducator() ? (
         <>
           <Cloud className="h-4 w-4 text-purple-400" />
           <span className="text-purple-400">Cloud Enabled</span>

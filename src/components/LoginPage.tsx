@@ -353,7 +353,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
             Welcome, {pendingUser?.displayName?.split(" ")[0] || "there"}!
           </h1>
           <p className="mt-2 text-sm text-[#9ca3af]">
-            Do you have a class code from your teacher?
+            Do you have a class code from your educator?
           </p>
         </div>
 

@@ -256,8 +256,8 @@ export interface CloudGradingRequest {
 
 export type LicenseType =
   | "Student"
-  | "TeacherIndividual"
-  | "TeacherInstitution"
+  | "EducatorIndividual"
+  | "EducatorInstitution"
   | "Enterprise";
 
 export interface License {
@@ -267,7 +267,7 @@ export interface License {
 }
 
 export interface FeatureFlags {
-  teacher_mode: boolean;
+  educator_mode: boolean;
   cloud_sync: boolean;
   classrooms: boolean;
   cloud_grading: boolean;

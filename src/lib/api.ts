@@ -141,8 +141,8 @@ export async function getFeatureFlags(): Promise<FeatureFlags> {
   return invoke("get_feature_flags");
 }
 
-export async function isTeacherMode(): Promise<boolean> {
-  return invoke("is_teacher_mode");
+export async function isEducatorMode(): Promise<boolean> {
+  return invoke("is_educator_mode");
 }
 
 // ============================================

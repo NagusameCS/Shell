@@ -35,7 +35,7 @@ import {
 export function WelcomeScreen() {
   const navigate = useNavigate();
   const { setProject } = useAppStore();
-  const { user, isTeacher, canUseCloudSync, logout } = useAuthStore();
+  const { user, isEducator, canUseCloudSync, logout } = useAuthStore();
   const { recentProjects, addRecentProject, removeRecentProject } = useRecentProjectsStore();
   const [gitUrl, setGitUrl] = useState("");
   const [isCloning, setIsCloning] = useState(false);
@@ -214,10 +214,10 @@ export function WelcomeScreen() {
             </div>
           )}
           <span className="text-sm text-[#9ca3af]">{user.displayName || user.email}</span>
-          {isTeacher() && (
+          {isEducator() && (
             <span className="flex items-center gap-1 rounded-full bg-[#fbbf24]/20 px-2 py-0.5 text-xs text-[#fbbf24]">
               <Crown className="h-3 w-3" />
-              Teacher
+              Educator
             </span>
           )}
           <button
@@ -282,7 +282,7 @@ export function WelcomeScreen() {
             </div>
           </button>
 
-          {/* Cloud Projects - Teacher tier only */}
+          {/* Cloud Projects - Educator tier only */}
           {canUseCloudSync() && (
             <button className="group flex w-full items-center gap-3 rounded-xl bg-[#252526] p-4 text-left hover:bg-[#3c3c3c]">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#38bdf8]/20 text-[#38bdf8]">
@@ -349,7 +349,7 @@ export function WelcomeScreen() {
         </div>
 
         {/* Upgrade prompt for free users */}
-        {user && !isTeacher() && (
+        {user && !isEducator() && (
           <div className="mt-6 w-full rounded-xl border border-[#fbbf24]/30 bg-[#fbbf24]/10 p-4">
             <div className="flex items-center gap-2 text-[#fbbf24]">
               <Crown className="h-4 w-4" />

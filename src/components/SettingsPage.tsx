@@ -42,7 +42,7 @@ const sections: SettingsSection[] = [
 
 export function SettingsPage() {
   const navigate = useNavigate();
-  const { user, isTeacher, logout } = useAuthStore();
+  const { user, isEducator, logout } = useAuthStore();
   const { theme, setTheme, settings, updateSettings } = useAppStore();
   const [activeSection, setActiveSection] = useState("account");
   const [isSaving, setIsSaving] = useState(false);
@@ -305,10 +305,10 @@ export function SettingsPage() {
                       <h3 className="text-xl font-medium text-white">
                         {user?.displayName || "User"}
                       </h3>
-                      {isTeacher() && (
+                      {isEducator() && (
                         <span className="flex items-center gap-1 rounded-full bg-[#fbbf24]/20 px-2 py-0.5 text-xs text-[#fbbf24]">
                           <Crown className="h-3 w-3" />
-                          Teacher
+                          Educator
                         </span>
                       )}
                     </div>
@@ -327,15 +327,15 @@ export function SettingsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-white font-medium">
-                      {isTeacher() ? "Education Plan" : "Free Plan"}
+                      {isEducator() ? "Education Plan" : "Free Plan"}
                     </p>
                     <p className="text-sm text-[#6b7280]">
-                      {isTeacher()
+                      {isEducator()
                         ? "Cloud sync, classrooms, and more"
                         : "Basic features, offline only"}
                     </p>
                   </div>
-                  {!isTeacher() && (
+                  {!isEducator() && (
                     <UpgradeButton />
                   )}
                 </div>

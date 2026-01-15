@@ -89,7 +89,7 @@ export const storage = getStorage(app);
 // User Types
 // ============================================
 
-export type UserTier = "free" | "teacher";
+export type UserTier = "free" | "educator";
 
 export interface ShellUser {
   uid: string;
@@ -100,7 +100,7 @@ export interface ShellUser {
   createdAt: Timestamp;
   lastLoginAt: Timestamp;
   settings: UserSettings;
-  classrooms?: string[]; // For teachers
+  classrooms?: string[]; // For educators
   enrolledClassrooms?: string[]; // For students
 }
 
@@ -117,8 +117,8 @@ export interface Classroom {
   id: string;
   name: string;
   description: string;
-  teacherId: string;
-  teacherName: string;
+  educatorId: string;
+  educatorName: string;
   code: string; // Join code
   createdAt: Timestamp;
   studentCount: number;
@@ -140,15 +140,15 @@ export interface CloudProject {
 // ============================================
 
 /**
- * Check for local teacher upgrade and apply it to user data
+ * Check for local educator upgrade and apply it to user data
  */
-function checkLocalTeacherUpgrade(userData: ShellUser): ShellUser {
-  const localUpgrade = localStorage.getItem('shell_teacher_upgrade');
+function checkLocalEducatorUpgrade(userData: ShellUser): ShellUser {
+  const localUpgrade = localStorage.getItem('shell_educator_upgrade');
   if (localUpgrade) {
     try {
       const upgrade = JSON.parse(localUpgrade);
       if (upgrade.userId === userData.uid) {
-        return { ...userData, tier: 'teacher' };
+        return { ...userData, tier: 'educator' };
       }
     } catch (e) {
       console.error('Failed to parse local upgrade:', e);
@@ -248,7 +248,7 @@ export async function parseAuthCode(code: string): Promise<ShellUser> {
     },
   };
   
-  return checkLocalTeacherUpgrade(shellUser);
+  return checkLocalEducatorUpgrade(shellUser);
 }
 
 /**
@@ -269,7 +269,7 @@ async function processUserLogin(user: User): Promise<ShellUser> {
       console.warn('Could not update last login:', e);
     }
     const userData = userSnap.data() as ShellUser;
-    return checkLocalTeacherUpgrade(userData);
+    return checkLocalEducatorUpgrade(userData);
   } else {
     // Create new user
     const newUser: Omit<ShellUser, "createdAt" | "lastLoginAt"> & {
@@ -300,7 +300,7 @@ async function processUserLogin(user: User): Promise<ShellUser> {
     }
     
     const userData = { ...newUser, createdAt: null, lastLoginAt: null } as unknown as ShellUser;
-    return checkLocalTeacherUpgrade(userData);
+    return checkLocalEducatorUpgrade(userData);
   }
 }
 
@@ -361,11 +361,11 @@ export async function updateUserSettings(
   });
 }
 
-export async function upgradeToTeacher(userId: string, licenseKey: string): Promise<boolean> {
+export async function upgradeToEducator(userId: string, licenseKey: string): Promise<boolean> {
   // Validate the license key/access code
-  // For testing: "Teacher1" works
+  // For testing: "Educator1" works
   // In production, validate against server/database
-  const validCodes = ["Teacher1", "TEACHER1", "teacher1"];
+  const validCodes = ["Educator1", "EDUCATOR1", "educator1"];
   
   if (!validCodes.includes(licenseKey)) {
     console.log('Invalid license code provided');
@@ -382,26 +382,26 @@ export async function upgradeToTeacher(userId: string, licenseKey: string): Prom
       return false;
     }
     
-    // Update the tier to teacher
+    // Update the tier to educator
     await updateDoc(userRef, {
-      tier: "teacher",
+      tier: "educator",
       upgradedAt: serverTimestamp(),
       licenseCode: licenseKey,
     });
     
-    console.log('Successfully upgraded to teacher tier');
+    console.log('Successfully upgraded to educator tier');
     return true;
   } catch (error: unknown) {
     // Handle Firestore permission errors
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Failed to upgrade to teacher:', errorMessage);
+    console.error('Failed to upgrade to educator:', errorMessage);
     
     // If it's a permission error, the Firestore rules need to be updated
     // For now, we'll use local storage as a fallback
     if (errorMessage.includes('permission') || errorMessage.includes('PERMISSION_DENIED')) {
       console.log('Firestore permission denied - using local upgrade');
       // Store upgrade locally (will be synced when rules are fixed)
-      localStorage.setItem('shell_teacher_upgrade', JSON.stringify({
+      localStorage.setItem('shell_educator_upgrade', JSON.stringify({
         userId,
         licenseKey,
         upgradedAt: new Date().toISOString()
@@ -413,14 +413,14 @@ export async function upgradeToTeacher(userId: string, licenseKey: string): Prom
   }
 }
 
-// Validate teacher access code without upgrading (for preview)
-export function validateTeacherCode(code: string): boolean {
-  const validCodes = ["Teacher1", "TEACHER1", "teacher1"];
+// Validate educator access code without upgrading (for preview)
+export function validateEducatorCode(code: string): boolean {
+  const validCodes = ["Educator1", "EDUCATOR1", "educator1"];
   return validCodes.includes(code);
 }
 
 // ============================================
-// Cloud Storage Functions (Teacher Tier Only)
+// Cloud Storage Functions (Educator Tier Only)
 // ============================================
 
 export async function uploadProjectFile(
@@ -497,12 +497,12 @@ export async function getUserProjects(userId: string): Promise<CloudProject[]> {
 }
 
 // ============================================
-// Classroom Functions (Teacher Tier Only)
+// Classroom Functions (Educator Tier Only)
 // ============================================
 
 export async function createClassroom(
-  teacherId: string,
-  teacherName: string,
+  educatorId: string,
+  educatorName: string,
   name: string,
   description: string
 ): Promise<string> {
@@ -515,8 +515,8 @@ export async function createClassroom(
     id: classroomRef.id,
     name,
     description,
-    teacherId,
-    teacherName,
+    educatorId,
+    educatorName,
     code: joinCode,
     createdAt: serverTimestamp(),
     studentCount: 0,
@@ -524,8 +524,8 @@ export async function createClassroom(
 
   await setDoc(classroomRef, classroom);
 
-  // Add classroom to teacher's list
-  const userRef = doc(db, "users", teacherId);
+  // Add classroom to educator's list
+  const userRef = doc(db, "users", educatorId);
   const userSnap = await getDoc(userRef);
   if (userSnap.exists()) {
     const userData = userSnap.data() as ShellUser;
@@ -569,9 +569,9 @@ export async function joinClassroom(studentId: string, joinCode: string): Promis
   return true;
 }
 
-export async function getTeacherClassrooms(teacherId: string): Promise<Classroom[]> {
+export async function getEducatorClassrooms(educatorId: string): Promise<Classroom[]> {
   const classroomsRef = collection(db, "classrooms");
-  const q = query(classroomsRef, where("teacherId", "==", teacherId));
+  const q = query(classroomsRef, where("educatorId", "==", educatorId));
   const snapshot = await getDocs(q);
   return snapshot.docs.map((doc) => doc.data() as Classroom);
 }

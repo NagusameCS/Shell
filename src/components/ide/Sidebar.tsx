@@ -285,7 +285,7 @@ Shell includes a built-in lesson system:
 2. Select "Local" for downloaded lessons
 3. Select "Marketplace" for community lessons
 
-**For Teachers**
+**For Educators**
 Create custom lessons using YAML format.
 See the lesson schema documentation.`,
   },
@@ -298,7 +298,7 @@ See the lesson schema documentation.`,
 • Submit assignments directly in the IDE
 • View grades and feedback
 
-**For Teachers** (Education Plan)
+**For Educators** (Education Plan)
 • Create and manage classrooms
 • Distribute assignments with auto-grading
 • Track student progress analytics
@@ -306,7 +306,7 @@ See the lesson schema documentation.`,
 
 **Joining a Classroom**
 1. Click "Join Classroom" on welcome screen
-2. Enter the 6-character code from your teacher
+2. Enter the 6-character code from your educator
 3. Access classroom content in the Lessons tab`,
   },
   {

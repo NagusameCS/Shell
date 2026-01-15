@@ -9,7 +9,7 @@ interface AppState {
 
   // Feature flags
   features: FeatureFlags | null;
-  isTeacher: boolean;
+  isEducator: boolean;
 
   // Settings
   settings: Settings | null;
@@ -69,7 +69,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         initialized: true,
         features,
         settings: mergedSettings,
-        isTeacher: features.teacher_mode,
+        isEducator: features.educator_mode,
         theme: (localStorage.getItem("shell-theme") as "dark" | "light" | "system") || localSettings?.theme || "dark",
       });
     } catch (error) {
@@ -78,7 +78,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       set({
         initialized: true,
         features: {
-          teacher_mode: false,
+          educator_mode: false,
           cloud_sync: false,
           classrooms: false,
           cloud_grading: false,
@@ -109,7 +109,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   // Feature flags
   features: null,
-  isTeacher: false,
+  isEducator: false,
 
   // Settings
   settings: null,

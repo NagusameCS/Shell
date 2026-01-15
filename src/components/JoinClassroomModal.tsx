@@ -80,7 +80,7 @@ export function JoinClassroomModal({ isOpen, onClose, onJoined }: JoinClassroomM
           </div>
           <div>
             <h2 className="text-xl font-bold text-white">Join a Classroom</h2>
-            <p className="text-sm text-[#9ca3af]">Enter the code from your teacher</p>
+            <p className="text-sm text-[#9ca3af]">Enter the code from your educator</p>
           </div>
         </div>
 
@@ -126,10 +126,10 @@ export function JoinClassroomModal({ isOpen, onClose, onJoined }: JoinClassroomM
                     What happens when you join?
                   </p>
                   <ul className="mt-2 text-xs text-[#9ca3af] space-y-1">
-                    <li>• Access lessons and assignments from your teacher</li>
+                    <li>• Access lessons and assignments from your educator</li>
                     <li>• Submit your work for grading</li>
                     <li>• View feedback and grades</li>
-                    <li>• Your teacher can see your progress</li>
+                    <li>• Your educator can see your progress</li>
                   </ul>
                 </div>
               </div>
@@ -156,7 +156,7 @@ export function JoinClassroomModal({ isOpen, onClose, onJoined }: JoinClassroomM
 
             {/* Footer */}
             <p className="mt-4 text-center text-xs text-[#6b7280]">
-              Don't have a code? Ask your teacher for one.
+              Don't have a code? Ask your educator for one.
             </p>
           </>
         )}

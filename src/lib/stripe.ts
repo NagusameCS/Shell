@@ -1,7 +1,7 @@
 /**
  * Stripe Payment Integration
  *
- * Handles Teacher tier subscriptions and payments
+ * Handles Educator tier subscriptions and payments
  * Cloud service - never required for basic IDE functionality
  */
 
@@ -28,14 +28,14 @@ export function getStripe(): Promise<Stripe | null> {
  * Pricing tiers
  */
 export const PRICING = {
-  teacher: {
+  educator: {
     monthly: {
-      priceId: "price_teacher_monthly", // Replace with actual Stripe price ID
+      priceId: "price_educator_monthly", // Replace with actual Stripe price ID
       amount: 9.99,
       interval: "month" as const,
     },
     yearly: {
-      priceId: "price_teacher_yearly", // Replace with actual Stripe price ID
+      priceId: "price_educator_yearly", // Replace with actual Stripe price ID
       amount: 99.99,
       interval: "year" as const,
       savings: "17%",
@@ -50,7 +50,7 @@ export type PricingInterval = "monthly" | "yearly";
  */
 export interface SubscriptionStatus {
   active: boolean;
-  tier: "free" | "teacher";
+  tier: "free" | "educator";
   currentPeriodEnd: Date | null;
   cancelAtPeriodEnd: boolean;
   stripeCustomerId: string | null;
@@ -58,7 +58,7 @@ export interface SubscriptionStatus {
 }
 
 /**
- * Create a checkout session for Teacher subscription
+ * Create a checkout session for Educator subscription
  * This calls your backend to create a Stripe checkout session
  */
 export async function createCheckoutSession(
@@ -69,7 +69,7 @@ export async function createCheckoutSession(
     throw new Error("User must be logged in to subscribe");
   }
 
-  const priceId = PRICING.teacher[interval].priceId;
+  const priceId = PRICING.educator[interval].priceId;
 
   try {
     // Call your backend to create checkout session
@@ -192,7 +192,7 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
     const sub = data.subscription;
     return {
       active: sub.status === "active" || sub.status === "trialing",
-      tier: sub.status === "active" || sub.status === "trialing" ? "teacher" : "free",
+      tier: sub.status === "active" || sub.status === "trialing" ? "educator" : "free",
       currentPeriodEnd: sub.currentPeriodEnd?.toDate() || null,
       cancelAtPeriodEnd: sub.cancelAtPeriodEnd || false,
       stripeCustomerId: sub.stripeCustomerId || null,
@@ -217,7 +217,7 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
  */
 export async function updateUserTier(
   userId: string,
-  tier: "free" | "teacher",
+  tier: "free" | "educator",
   subscriptionData?: {
     stripeCustomerId: string;
     stripeSubscriptionId: string;
@@ -244,10 +244,10 @@ export async function updateUserTier(
 }
 
 /**
- * Check if a feature requires Teacher tier
+ * Check if a feature requires Educator tier
  */
-export function requiresTeacherTier(feature: string): boolean {
-  const teacherFeatures = [
+export function requiresEducatorTier(feature: string): boolean {
+  const educatorFeatures = [
     "cloud_sync",
     "classrooms",
     "assignment_distribution",
@@ -256,7 +256,7 @@ export function requiresTeacherTier(feature: string): boolean {
     "exam_mode",
     "plagiarism_detection",
   ];
-  return teacherFeatures.includes(feature);
+  return educatorFeatures.includes(feature);
 }
 
 /**

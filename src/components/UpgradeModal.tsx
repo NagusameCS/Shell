@@ -7,7 +7,7 @@
 import { useState } from "react";
 import { X, Check, Crown, Cloud, Users, BarChart3, Shield, Loader2, Key, GraduationCap, Building2, Server } from "lucide-react";
 import { PRICING, formatPrice, redirectToCheckout, type PricingInterval } from "@/lib/stripe";
-import { upgradeToTeacher } from "@/lib/firebase";
+import { upgradeToEducator } from "@/lib/firebase";
 import { useAuthStore } from "@/stores/authStore";
 
 interface UpgradeModalProps {
@@ -37,8 +37,8 @@ const tiers = {
       "View grades & feedback",
     ],
   },
-  teacher: {
-    name: "Shell Teacher",
+  educator: {
+    name: "Shell Educator",
     price: "$8-12",
     priceNote: "/month",
     icon: Crown,
@@ -65,8 +65,8 @@ const tiers = {
     bgColor: "bg-blue-500/10",
     borderColor: "border-blue-500/30",
     features: [
-      "Everything in Teacher, plus:",
-      "Unlimited teachers & students",
+      "Everything in Educator, plus:",
+      "Unlimited educators & students",
       "School-wide dashboard",
       "Advanced analytics",
       "Plagiarism detection",
@@ -95,7 +95,7 @@ const tiers = {
   },
 };
 
-const teacherFeatures = [
+const educatorFeatures = [
   { icon: Cloud, label: "Cloud sync across devices" },
   { icon: Users, label: "Create and manage classrooms" },
   { icon: BarChart3, label: "Student analytics & progress" },
@@ -116,7 +116,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
 
   if (!isOpen) return null;
 
-  const selectedPricing = PRICING.teacher[interval];
+  const selectedPricing = PRICING.educator[interval];
 
   const handleUpgrade = async () => {
     setIsLoading(true);
@@ -137,11 +137,11 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
     setAccessCodeError(null);
 
     try {
-      const success = await upgradeToTeacher(user.uid, accessCode);
+      const success = await upgradeToEducator(user.uid, accessCode);
       if (success) {
         setAccessCodeSuccess(true);
         // Update user state
-        setUser({ ...user, tier: "teacher" });
+        setUser({ ...user, tier: "educator" });
         setTimeout(() => onClose(), 1500);
       } else {
         setAccessCodeError("Invalid access code. Please check and try again.");
@@ -249,9 +249,9 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
             }`}
           >
             Yearly
-            {PRICING.teacher.yearly.savings && (
+            {PRICING.educator.yearly.savings && (
               <span className="ml-2 rounded-full bg-green-500/20 px-2 py-0.5 text-xs text-green-400">
-                Save {PRICING.teacher.yearly.savings}
+                Save {PRICING.educator.yearly.savings}
               </span>
             )}
           </button>
@@ -276,7 +276,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
         <div className="mb-6 rounded-xl bg-[#1e1e1e] p-4">
           <h3 className="mb-3 font-medium text-white">What's included:</h3>
           <ul className="space-y-2">
-            {teacherFeatures.map((feature, index) => (
+            {educatorFeatures.map((feature, index) => (
               <li key={index} className="flex items-center gap-3 text-[#d4d4d4]">
                 <feature.icon className="h-4 w-4 text-[var(--accent-color)]" />
                 <span>{feature.label}</span>

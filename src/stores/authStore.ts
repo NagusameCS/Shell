@@ -26,7 +26,7 @@ interface AuthState {
   isSessionValid: () => boolean;
 
   // Computed helpers
-  isTeacher: () => boolean;
+  isEducator: () => boolean;
   canUseCloudSync: () => boolean;
   canCreateClassrooms: () => boolean;
 }
@@ -52,8 +52,8 @@ export const useAuthStore = create<AuthState>()(
       setLoading: (loading) => set({ isLoading: loading }),
 
       logout: () => {
-        // Clear local teacher upgrade on logout
-        localStorage.removeItem('shell_teacher_upgrade');
+        // Clear local educator upgrade on logout
+        localStorage.removeItem('shell_educator_upgrade');
         set({
           user: null,
           isAuthenticated: false,
@@ -77,13 +77,13 @@ export const useAuthStore = create<AuthState>()(
         return Date.now() < sessionExpiry;
       },
 
-      isTeacher: () => {
+      isEducator: () => {
         const { user } = get();
         // Check both Firestore tier and local upgrade
-        if (user?.tier === "teacher") return true;
+        if (user?.tier === "educator") return true;
         
-        // Check for local teacher upgrade
-        const localUpgrade = localStorage.getItem('shell_teacher_upgrade');
+        // Check for local educator upgrade
+        const localUpgrade = localStorage.getItem('shell_educator_upgrade');
         if (localUpgrade) {
           try {
             const upgrade = JSON.parse(localUpgrade);
@@ -96,13 +96,13 @@ export const useAuthStore = create<AuthState>()(
       },
 
       canUseCloudSync: () => {
-        const { user, isTeacher } = get();
-        return isTeacher() && user?.settings?.cloudSyncEnabled === true;
+        const { user, isEducator } = get();
+        return isEducator() && user?.settings?.cloudSyncEnabled === true;
       },
 
       canCreateClassrooms: () => {
-        const { isTeacher } = get();
-        return isTeacher();
+        const { isEducator } = get();
+        return isEducator();
       },
     }),
     {
