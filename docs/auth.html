@@ -254,6 +254,7 @@
         import { 
             getAuth, 
             GoogleAuthProvider, 
+            signInWithPopup,
             signInWithRedirect,
             getRedirectResult
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -297,6 +298,11 @@
             buttonEl.disabled = true;
         }
 
+        function hideLoading() {
+            statusEl.style.display = 'none';
+            buttonEl.disabled = false;
+        }
+
         function generateCode() {
             const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
             let code = '';
@@ -335,41 +341,63 @@
             });
         }
 
-        // Check for redirect result on page load
+        async function handleSignInSuccess(user) {
+            showLoading('Generating your code...');
+            const code = generateCode();
+            await storeAuthCode(code, user);
+            showSuccess(code);
+        }
+
+        // Check for redirect result on page load (for redirect flow)
         async function checkRedirectResult() {
             try {
-                showLoading('Checking sign-in status...');
                 const result = await getRedirectResult(auth);
                 
                 if (result && result.user) {
-                    showLoading('Generating your code...');
-                    const code = generateCode();
-                    await storeAuthCode(code, result.user);
-                    showSuccess(code);
+                    await handleSignInSuccess(result.user);
                     return true;
                 }
                 
-                // No redirect result, show the button
-                statusEl.style.display = 'none';
-                buttonEl.disabled = false;
+                // No redirect result, ready for sign in
+                hideLoading();
                 return false;
             } catch (error) {
                 console.error('Redirect result error:', error);
-                showStatus('Sign-in failed: ' + error.message, 'error');
-                buttonEl.disabled = false;
+                hideLoading();
                 return false;
             }
         }
 
-        // Handle button click - redirect to Google
+        // Handle button click - try popup first, fallback to redirect
         buttonEl.addEventListener('click', async () => {
-            showLoading('Redirecting to Google...');
+            showLoading('Signing in with Google...');
+            
             try {
-                await signInWithRedirect(auth, googleProvider);
-            } catch (error) {
-                console.error('Redirect error:', error);
-                showStatus('Failed to start sign-in: ' + error.message, 'error');
-                buttonEl.disabled = false;
+                // Try popup first - it's faster and more reliable
+                const result = await signInWithPopup(auth, googleProvider);
+                if (result && result.user) {
+                    await handleSignInSuccess(result.user);
+                }
+            } catch (popupError) {
+                console.log('Popup failed, trying redirect:', popupError.code);
+                
+                // If popup was blocked or failed, try redirect
+                if (popupError.code === 'auth/popup-blocked' || 
+                    popupError.code === 'auth/popup-closed-by-user' ||
+                    popupError.code === 'auth/cancelled-popup-request') {
+                    
+                    showLoading('Redirecting to Google...');
+                    try {
+                        await signInWithRedirect(auth, googleProvider);
+                    } catch (redirectError) {
+                        console.error('Redirect error:', redirectError);
+                        showStatus('Sign-in failed: ' + redirectError.message, 'error');
+                        buttonEl.disabled = false;
+                    }
+                } else {
+                    showStatus('Sign-in failed: ' + popupError.message, 'error');
+                    buttonEl.disabled = false;
+                }
             }
         });
 
