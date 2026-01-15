@@ -256,7 +256,8 @@
             GoogleAuthProvider, 
             signInWithPopup,
             signInWithRedirect,
-            getRedirectResult
+            getRedirectResult,
+            onAuthStateChanged
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import {
             getFirestore,
@@ -350,11 +351,23 @@
 
         // Check for redirect result on page load (for redirect flow)
         async function checkRedirectResult() {
+            // Show loading while checking
+            showLoading('Checking sign-in status...');
+            
             try {
                 const result = await getRedirectResult(auth);
+                console.log('Redirect result:', result);
                 
                 if (result && result.user) {
+                    console.log('Got user from redirect:', result.user.email);
                     await handleSignInSuccess(result.user);
+                    return true;
+                }
+                
+                // Also check if user is already signed in
+                if (auth.currentUser) {
+                    console.log('User already signed in:', auth.currentUser.email);
+                    await handleSignInSuccess(auth.currentUser);
                     return true;
                 }
                 
@@ -363,6 +376,14 @@
                 return false;
             } catch (error) {
                 console.error('Redirect result error:', error);
+                
+                // Even on error, check if user is signed in
+                if (auth.currentUser) {
+                    console.log('User signed in despite error:', auth.currentUser.email);
+                    await handleSignInSuccess(auth.currentUser);
+                    return true;
+                }
+                
                 hideLoading();
                 return false;
             }
@@ -403,6 +424,16 @@
 
         // Check for redirect result on page load
         checkRedirectResult();
+        
+        // Also listen for auth state changes (catches any sign-in method)
+        let handledAuth = false;
+        onAuthStateChanged(auth, async (user) => {
+            if (user && !handledAuth) {
+                handledAuth = true;
+                console.log('Auth state changed - user signed in:', user.email);
+                await handleSignInSuccess(user);
+            }
+        });
     </script>
 </body>
 </html>
