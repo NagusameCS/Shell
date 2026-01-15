@@ -115,7 +115,8 @@
   }
 
   .editor-tab.active {
-    @apply bg-editor-bg border-t-2 border-t-shell-500;
+    @apply bg-editor-bg border-t-2;
+    border-top-color: var(--accent-color);
   }
 
   /* Activity bar */
@@ -124,7 +125,8 @@
   }
 
   .activity-icon.active {
-    @apply border-l-2 border-l-shell-500 bg-white/5;
+    @apply border-l-2 bg-white/5;
+    border-left-color: var(--accent-color);
   }
 }
 

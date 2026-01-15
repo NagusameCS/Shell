@@ -234,7 +234,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
             onClick={() => setInterval("monthly")}
             className={`rounded-lg px-4 py-2 text-sm font-medium ${
               interval === "monthly"
-                ? "bg-[#7DD3FC] text-[#1e1e1e]"
+                ? "bg-[var(--accent-color)] text-white"
                 : "bg-[#3c3c3c] text-[#9ca3af] hover:text-white"
             }`}
           >
@@ -244,7 +244,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
             onClick={() => setInterval("yearly")}
             className={`rounded-lg px-4 py-2 text-sm font-medium ${
               interval === "yearly"
-                ? "bg-[#7DD3FC] text-[#1e1e1e]"
+                ? "bg-[var(--accent-color)] text-white"
                 : "bg-[#3c3c3c] text-[#9ca3af] hover:text-white"
             }`}
           >
@@ -278,7 +278,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
           <ul className="space-y-2">
             {teacherFeatures.map((feature, index) => (
               <li key={index} className="flex items-center gap-3 text-[#d4d4d4]">
-                <feature.icon className="h-4 w-4 text-[#7DD3FC]" />
+                <feature.icon className="h-4 w-4 text-[var(--accent-color)]" />
                 <span>{feature.label}</span>
               </li>
             ))}
@@ -296,7 +296,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
         <button
           onClick={handleUpgrade}
           disabled={isLoading}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#7DD3FC] py-4 font-semibold text-[#1e1e1e] hover:bg-[#67c8f7] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent-color)] py-4 font-semibold text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <>

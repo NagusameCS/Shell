@@ -48,16 +48,15 @@ export function Shelly2({ size = 120, className = "" }: Shelly2Props) {
 /**
  * Shelly2Container - Mascot in a rounded container
  * Used on login and welcome screens
- * Features: bright soft blue background, no shadow/glow
+ * Features: uses accent color background, no shadow/glow
  */
 export function Shelly2Container({ size = 256 }: { size?: number }) {
   return (
     <div
-      className="flex items-center justify-center overflow-hidden rounded-3xl"
+      className="flex items-center justify-center overflow-hidden rounded-3xl bg-[var(--accent-color)]"
       style={{ 
         width: size, 
         height: size,
-        backgroundColor: "#7DD3FC", // bright soft blue (sky-300)
       }}
     >
       <Shelly2 size={size} />

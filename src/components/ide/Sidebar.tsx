@@ -1,4 +1,4 @@
-import { memo, useMemo, lazy, Suspense } from "react";
+import { memo, useMemo, useState, lazy, Suspense } from "react";
 import { useAppStore } from "@/stores/appStore";
 import { useAuthStore } from "@/stores/authStore";
 import { FileExplorer } from "./FileExplorer";
@@ -192,7 +192,7 @@ const SettingsPanel = memo(function SettingsPanel() {
               <span className="flex-1 text-left">{setting.label}</span>
               <div
                 className={`h-4 w-7 rounded-full transition-colors ${
-                  setting.enabled ? "bg-[#7DD3FC]" : "bg-[#3c3c3c]"
+                  setting.enabled ? "bg-[var(--accent-color)]" : "bg-[#3c3c3c]"
                 }`}
               >
                 <div
@@ -228,6 +228,104 @@ const SettingsPanel = memo(function SettingsPanel() {
     </div>
   );
 });
+
+// Shell documentation content - embedded from docs page
+const SHELL_DOCS = [
+  {
+    id: "getting-started",
+    title: "Getting Started",
+    icon: "🚀",
+    content: `Welcome to Shell IDE - an education-first development environment.
+
+**Quick Start:**
+1. Open a folder (⌘O) or create a new project (⌘N)
+2. Select files from the Explorer to edit
+3. Use the integrated terminal (⌘\`) for commands
+4. Run your code with the appropriate runtime
+
+**Keyboard Shortcuts:**
+• ⌘S - Save file
+• ⌘W - Close tab  
+• ⌘\` - Toggle terminal
+• ⌘N - New project
+• ⌘⇧N - New window`,
+  },
+  {
+    id: "features",
+    title: "IDE Features",
+    icon: "⚡",
+    content: `**Full-Featured IDE**
+• Syntax highlighting for 30+ languages
+• IntelliSense and auto-completion
+• Integrated terminal with shell support
+• Git version control integration
+
+**Editor Settings**
+Access via Settings (⌘,) or the sidebar:
+• Font size and family
+• Tab size (2, 4, or 8 spaces)
+• Show/hide minimap
+• Word wrap toggle
+• Line numbers
+• Auto-save`,
+  },
+  {
+    id: "lessons",
+    title: "Lessons & Learning",
+    icon: "📚",
+    content: `**Interactive Lessons**
+Shell includes a built-in lesson system:
+• Step-by-step instructions
+• Code hints and examples
+• Automatic progress tracking
+• Exercise validation
+
+**Browse Lessons**
+1. Click the book icon in the activity bar
+2. Select "Local" for downloaded lessons
+3. Select "Marketplace" for community lessons
+
+**For Teachers**
+Create custom lessons using YAML format.
+See the lesson schema documentation.`,
+  },
+  {
+    id: "classroom",
+    title: "Classroom Features",
+    icon: "🎓",
+    content: `**For Students**
+• Join classrooms with 6-character codes
+• Submit assignments directly in the IDE
+• View grades and feedback
+
+**For Teachers** (Education Plan)
+• Create and manage classrooms
+• Distribute assignments with auto-grading
+• Track student progress analytics
+• Enable exam mode for tests
+
+**Joining a Classroom**
+1. Click "Join Classroom" on welcome screen
+2. Enter the 6-character code from your teacher
+3. Access classroom content in the Lessons tab`,
+  },
+  {
+    id: "cloud",
+    title: "Cloud & Sync",
+    icon: "☁️",
+    content: `**Cloud Features** (Education Plan)
+• Sync projects across devices
+• Access your code from anywhere
+• Automatic backup and versioning
+• 1GB cloud storage included
+
+**Enable Cloud Sync**
+1. Upgrade to Education Plan
+2. Go to Settings → Cloud & Sync
+3. Toggle "Cloud Sync" on
+4. Your projects will sync automatically`,
+  },
+];
 
 // Language documentation data - static, no need to recreate
 const LANGUAGE_DOCS = [
@@ -282,64 +380,155 @@ const LANGUAGE_DOCS = [
 ];
 
 const DocsPanel = memo(function DocsPanel() {
+  const [activeDoc, setActiveDoc] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"shell" | "languages">("shell");
+  
   const openDocs = (url: string) => {
     import("@tauri-apps/plugin-shell").then(({ open }) => {
       open(url);
     });
   };
 
+  const activeDocContent = SHELL_DOCS.find(d => d.id === activeDoc);
+
+  // Render markdown-like content
+  const renderContent = (content: string) => {
+    return content.split('\n').map((line, i) => {
+      if (line.startsWith('**') && line.endsWith('**')) {
+        return <h4 key={i} className="font-semibold text-white mt-3 mb-1">{line.replace(/\*\*/g, '')}</h4>;
+      }
+      if (line.startsWith('• ')) {
+        return <li key={i} className="ml-4 text-sidebar-fg/80">{line.substring(2)}</li>;
+      }
+      if (line.match(/^\d+\./)) {
+        return <li key={i} className="ml-4 text-sidebar-fg/80 list-decimal">{line.substring(line.indexOf('.') + 2)}</li>;
+      }
+      if (line.trim() === '') {
+        return <br key={i} />;
+      }
+      return <p key={i} className="text-sidebar-fg/80">{line}</p>;
+    });
+  };
+
   return (
-    <div className="p-3 space-y-4">
-      <p className="text-xs text-sidebar-fg/60">
-        Quick access to language documentation
-      </p>
-      
-      <div className="space-y-1">
-        {LANGUAGE_DOCS.map((lang) => (
-          <button
-            key={lang.name}
-            onClick={() => openDocs(lang.docs)}
-            className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-all hover:bg-white/5 group animate-fade-in"
-          >
-            <span className="text-xl">{lang.icon}</span>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium text-sidebar-fg group-hover:text-[var(--accent-color)] transition-colors">
-                {lang.name}
-              </div>
-              <div className="text-xs text-sidebar-fg/50 truncate">
-                {lang.description}
-              </div>
-            </div>
-            <ExternalLink className="h-3.5 w-3.5 text-sidebar-fg/30 group-hover:text-sidebar-fg/60 transition-colors" />
-          </button>
-        ))}
+    <div className="flex flex-col h-full">
+      {/* Tabs */}
+      <div className="flex border-b border-[#3c3c3c]">
+        <button
+          onClick={() => { setActiveTab("shell"); setActiveDoc(null); }}
+          className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
+            activeTab === "shell" ? "text-white border-b-2" : "text-sidebar-fg/60 hover:text-sidebar-fg"
+          }`}
+          style={activeTab === "shell" ? { borderBottomColor: 'var(--accent-color)' } : {}}
+        >
+          Shell Docs
+        </button>
+        <button
+          onClick={() => { setActiveTab("languages"); setActiveDoc(null); }}
+          className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
+            activeTab === "languages" ? "text-white border-b-2" : "text-sidebar-fg/60 hover:text-sidebar-fg"
+          }`}
+          style={activeTab === "languages" ? { borderBottomColor: 'var(--accent-color)' } : {}}
+        >
+          Languages
+        </button>
       </div>
 
-      <div className="pt-4 border-t border-[#3c3c3c]">
-        <p className="text-xs text-sidebar-fg/40 mb-2">Resources</p>
-        <div className="space-y-1">
-          <button
-            onClick={() => openDocs("https://stackoverflow.com")}
-            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-sidebar-fg/70 hover:bg-white/5 transition-colors"
-          >
-            <span>📚</span>
-            <span>Stack Overflow</span>
-          </button>
-          <button
-            onClick={() => openDocs("https://github.com")}
-            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-sidebar-fg/70 hover:bg-white/5 transition-colors"
-          >
-            <span>🐙</span>
-            <span>GitHub</span>
-          </button>
-          <button
-            onClick={() => openDocs("https://devdocs.io")}
-            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-sidebar-fg/70 hover:bg-white/5 transition-colors"
-          >
-            <span>📖</span>
-            <span>DevDocs</span>
-          </button>
-        </div>
+      <div className="flex-1 overflow-auto p-3">
+        {activeTab === "shell" ? (
+          activeDoc && activeDocContent ? (
+            /* Doc detail view */
+            <div className="animate-fade-in">
+              <button
+                onClick={() => setActiveDoc(null)}
+                className="flex items-center gap-1 text-xs text-sidebar-fg/60 hover:text-sidebar-fg mb-3"
+              >
+                ← Back to docs
+              </button>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-2xl">{activeDocContent.icon}</span>
+                <h3 className="text-lg font-medium text-white">{activeDocContent.title}</h3>
+              </div>
+              <div className="text-sm space-y-1">
+                {renderContent(activeDocContent.content)}
+              </div>
+            </div>
+          ) : (
+            /* Doc list view */
+            <div className="space-y-2">
+              <p className="text-xs text-sidebar-fg/60 mb-3">
+                Learn how to use Shell IDE
+              </p>
+              {SHELL_DOCS.map((doc) => (
+                <button
+                  key={doc.id}
+                  onClick={() => setActiveDoc(doc.id)}
+                  className="flex w-full items-center gap-3 rounded-lg p-3 text-left transition-all hover:bg-white/5 group"
+                >
+                  <span className="text-xl">{doc.icon}</span>
+                  <span className="text-sm font-medium text-sidebar-fg group-hover:text-[var(--accent-color)] transition-colors">
+                    {doc.title}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )
+        ) : (
+          /* Languages tab */
+          <div className="space-y-4">
+            <p className="text-xs text-sidebar-fg/60">
+              Quick access to language documentation
+            </p>
+            
+            <div className="space-y-1">
+              {LANGUAGE_DOCS.map((lang) => (
+                <button
+                  key={lang.name}
+                  onClick={() => openDocs(lang.docs)}
+                  className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-all hover:bg-white/5 group animate-fade-in"
+                >
+                  <span className="text-xl">{lang.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-sidebar-fg group-hover:text-[var(--accent-color)] transition-colors">
+                      {lang.name}
+                    </div>
+                    <div className="text-xs text-sidebar-fg/50 truncate">
+                      {lang.description}
+                    </div>
+                  </div>
+                  <ExternalLink className="h-3.5 w-3.5 text-sidebar-fg/30 group-hover:text-sidebar-fg/60 transition-colors" />
+                </button>
+              ))}
+            </div>
+
+            <div className="pt-4 border-t border-[#3c3c3c]">
+              <p className="text-xs text-sidebar-fg/40 mb-2">Resources</p>
+              <div className="space-y-1">
+                <button
+                  onClick={() => openDocs("https://stackoverflow.com")}
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-sidebar-fg/70 hover:bg-white/5 transition-colors"
+                >
+                  <span>📚</span>
+                  <span>Stack Overflow</span>
+                </button>
+                <button
+                  onClick={() => openDocs("https://github.com")}
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-sidebar-fg/70 hover:bg-white/5 transition-colors"
+                >
+                  <span>🐙</span>
+                  <span>GitHub</span>
+                </button>
+                <button
+                  onClick={() => openDocs("https://devdocs.io")}
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-sidebar-fg/70 hover:bg-white/5 transition-colors"
+                >
+                  <span>📖</span>
+                  <span>DevDocs</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

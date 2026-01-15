@@ -228,7 +228,7 @@ export function SettingsPage() {
           <button
             onClick={handleSaveSettings}
             disabled={isSaving}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#7DD3FC] px-4 py-2 font-medium text-[#1e1e1e] hover:bg-[#5cc8fc] disabled:opacity-50 transition-colors"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--accent-color)] px-4 py-2 font-medium text-white hover:opacity-90 disabled:opacity-50 transition-colors"
           >
             {isSaving ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -260,7 +260,7 @@ export function SettingsPage() {
                       className="h-16 w-16 rounded-full"
                     />
                   ) : (
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#7DD3FC] text-2xl font-medium text-[#1e1e1e]">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--accent-color)] text-2xl font-medium text-white">
                       {user?.displayName?.charAt(0) || user?.email?.charAt(0) || "?"}
                     </div>
                   )}
@@ -331,7 +331,7 @@ export function SettingsPage() {
                     max={24}
                     value={fontSize}
                     onChange={(e) => setFontSize(parseInt(e.target.value))}
-                    className="flex-1 accent-[#7DD3FC]"
+                    className="flex-1 accent-[var(--accent-color)]"
                     aria-label="Font size"
                     title="Adjust font size"
                   />
@@ -349,7 +349,7 @@ export function SettingsPage() {
                       onClick={() => setFontFamily(font)}
                       className={`rounded-lg p-3 text-left transition-colors ${
                         fontFamily === font || fontFamily.startsWith(font)
-                          ? "bg-[#7DD3FC]/20 text-[#7DD3FC] ring-1 ring-[#7DD3FC]"
+                          ? "bg-[var(--accent-color)]/20 text-[var(--accent-color)] ring-1 ring-[var(--accent-color)]"
                           : "bg-[#3c3c3c] text-[#d4d4d4] hover:bg-[#4a4a4a]"
                       }`}
                       style={{ fontFamily: font }}
@@ -370,7 +370,7 @@ export function SettingsPage() {
                       onClick={() => setTabSize(size)}
                       className={`rounded-lg px-4 py-2 transition-colors ${
                         tabSize === size
-                          ? "bg-[#7DD3FC] text-[#1e1e1e]"
+                          ? "bg-[var(--accent-color)] text-white"
                           : "bg-[#3c3c3c] text-[#d4d4d4] hover:bg-[#4a4a4a]"
                       }`}
                     >
@@ -390,7 +390,8 @@ export function SettingsPage() {
                       type="checkbox"
                       checked={showMinimap}
                       onChange={(e) => setShowMinimap(e.target.checked)}
-                      className="h-5 w-5 accent-[#7DD3FC]"
+                      className="h-5 w-5"
+                      style={{ accentColor: 'var(--accent-color)' }}
                     />
                   </label>
                   <label className="flex items-center justify-between">
@@ -399,7 +400,8 @@ export function SettingsPage() {
                       type="checkbox"
                       checked={wordWrap}
                       onChange={(e) => setWordWrap(e.target.checked)}
-                      className="h-5 w-5 accent-[#7DD3FC]"
+                      className="h-5 w-5"
+                      style={{ accentColor: 'var(--accent-color)' }}
                     />
                   </label>
                   <label className="flex items-center justify-between">
@@ -408,7 +410,8 @@ export function SettingsPage() {
                       type="checkbox"
                       checked={lineNumbers}
                       onChange={(e) => setLineNumbers(e.target.checked)}
-                      className="h-5 w-5 accent-[#7DD3FC]"
+                      className="h-5 w-5"
+                      style={{ accentColor: 'var(--accent-color)' }}
                     />
                   </label>
                   <label className="flex items-center justify-between">
@@ -417,7 +420,8 @@ export function SettingsPage() {
                       type="checkbox"
                       checked={autoSave}
                       onChange={(e) => setAutoSave(e.target.checked)}
-                      className="h-5 w-5 accent-[#7DD3FC]"
+                      className="h-5 w-5"
+                      style={{ accentColor: 'var(--accent-color)' }}
                     />
                   </label>
                   <label className="flex items-center justify-between">
@@ -426,7 +430,8 @@ export function SettingsPage() {
                       type="checkbox"
                       checked={formatOnSave}
                       onChange={(e) => setFormatOnSave(e.target.checked)}
-                      className="h-5 w-5 accent-[#7DD3FC]"
+                      className="h-5 w-5"
+                      style={{ accentColor: 'var(--accent-color)' }}
                     />
                   </label>
                 </div>
@@ -546,7 +551,7 @@ export function SettingsPage() {
                       <button
                         onClick={() => setCloudSyncEnabled(!cloudSyncEnabled)}
                         className={`relative h-7 w-14 rounded-full transition-colors ${
-                          cloudSyncEnabled ? "bg-[#7DD3FC]" : "bg-[#3c3c3c]"
+                          cloudSyncEnabled ? "bg-[var(--accent-color)]" : "bg-[#3c3c3c]"
                         }`}
                         aria-label={cloudSyncEnabled ? "Disable cloud sync" : "Enable cloud sync"}
                         title={cloudSyncEnabled ? "Disable cloud sync" : "Enable cloud sync"}
@@ -565,7 +570,7 @@ export function SettingsPage() {
                     <h3 className="mb-4 text-lg font-medium text-white">Storage</h3>
                     <div className="mb-2 h-2 rounded-full bg-[#3c3c3c]">
                       <div
-                        className="h-full rounded-full bg-[#7DD3FC]"
+                        className="h-full rounded-full bg-[var(--accent-color)]"
                         style={{ width: "15%" }}
                       />
                     </div>

@@ -209,7 +209,7 @@ export function WelcomeScreen() {
               className="h-8 w-8 rounded-full"
             />
           ) : (
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#7DD3FC] text-sm font-medium text-[#1e1e1e]">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent-color)] text-sm font-medium text-white">
               {user.displayName?.charAt(0) || user.email?.charAt(0) || "?"}
             </div>
           )}
@@ -257,7 +257,7 @@ export function WelcomeScreen() {
             onClick={handleOpenFolder}
             className="group flex w-full items-center gap-3 rounded-xl bg-[#252526] p-4 text-left hover:bg-[#3c3c3c]"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#7DD3FC]/20 text-[#7DD3FC]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--accent-color)]/20 text-[var(--accent-color)]">
               <FolderOpen className="h-5 w-5" />
             </div>
             <div className="flex-1">
@@ -323,7 +323,7 @@ export function WelcomeScreen() {
                   className="group flex items-center gap-3 p-3 hover:bg-[#3c3c3c] cursor-pointer first:rounded-t-lg last:rounded-b-lg"
                   onClick={() => handleOpenRecentProject(project.path)}
                 >
-                  <FolderOpen className="h-4 w-4 text-[#7DD3FC]" />
+                  <FolderOpen className="h-4 w-4 text-[var(--accent-color)]" />
                   <div className="flex-1 min-w-0">
                     <div className="text-sm text-white truncate">{project.name}</div>
                     <div className="text-xs text-[#6b7280] truncate">{project.path}</div>
@@ -377,7 +377,7 @@ export function WelcomeScreen() {
                 placeholder="https://github.com/user/repo.git"
                 value={gitUrl}
                 onChange={(e) => setGitUrl(e.target.value)}
-                className="w-full rounded-lg bg-[#3c3c3c] px-4 py-3 text-white placeholder-[#6b7280] outline-none focus:ring-2 focus:ring-[#7DD3FC]"
+                className="w-full rounded-lg bg-[#3c3c3c] px-4 py-3 text-white placeholder-[#6b7280] outline-none focus:ring-2 focus:ring-[var(--accent-color)]" 
                 onKeyDown={(e) => e.key === "Enter" && handleCloneFromGitHub()}
                 autoFocus
               />
@@ -385,7 +385,7 @@ export function WelcomeScreen() {
                 <button
                   onClick={handleCloneFromGitHub}
                   disabled={isCloning || !gitUrl.trim()}
-                  className="flex-1 rounded-lg bg-[#7DD3FC] px-4 py-2 font-medium text-[#1e1e1e] hover:bg-[#67c8f7] disabled:opacity-50"
+                  className="flex-1 rounded-lg bg-[var(--accent-color)] px-4 py-2 font-medium text-white hover:opacity-90 disabled:opacity-50"
                 >
                   {isCloning ? "Cloning..." : "Clone"}
                 </button>
@@ -400,7 +400,7 @@ export function WelcomeScreen() {
           ) : (
             <button
               onClick={() => setShowCloneInput(true)}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#3c3c3c] p-4 text-[#9ca3af] hover:border-[#7DD3FC] hover:text-white"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#3c3c3c] p-4 text-[#9ca3af] hover:border-[var(--accent-color)] hover:text-white"
             >
               <Github className="h-5 w-5" />
               <span>Clone from GitHub</span>
