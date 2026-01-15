@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback, useMemo, memo } from "react";
+import { useState, useEffect, useCallback, useMemo, memo, DragEvent } from "react";
 import { useAppStore } from "@/stores/appStore";
 import { useEditorStore } from "@/stores/editorStore";
-import { listDirectory, createFile, deleteFile } from "@/lib/api";
-import { readTextFile, mkdir, remove, rename } from "@tauri-apps/plugin-fs";
+import { listDirectory, createFile, deleteFile, writeFile } from "@/lib/api";
+import { readTextFile, mkdir, remove, rename, copyFile } from "@tauri-apps/plugin-fs";
 import { open as shellOpen } from "@tauri-apps/plugin-shell";
 import { getLanguageFromExtension, getFileExtension, cn } from "@/lib/utils";
 import { ContextMenu } from "./ContextMenu";
@@ -28,6 +28,7 @@ import {
   FilePlus,
   FolderPlus,
   RefreshCw,
+  Upload,
 } from "lucide-react";
 
 // Memoized file icon lookup to avoid switch recreation
@@ -76,6 +77,8 @@ export const FileExplorer = memo(function FileExplorer() {
     name: string;
     isDirectory: boolean;
   } | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [dragTarget, setDragTarget] = useState<string | null>(null);
 
   useEffect(() => {
     if (project?.path) {
@@ -223,6 +226,91 @@ export const FileExplorer = memo(function FileExplorer() {
     }
   }, [handleCopyPath, handleDelete, handleNewFile, handleNewFolder]);
 
+  // Handle drag over to show drop target
+  const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only leave if we're exiting the component completely
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragOver(false);
+      setDragTarget(null);
+    }
+  }, []);
+
+  // Handle file drop from system
+  const handleDrop = useCallback(async (e: DragEvent<HTMLDivElement>, targetPath?: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    setDragTarget(null);
+
+    const dropPath = targetPath || project?.path;
+    if (!dropPath) return;
+
+    const items = e.dataTransfer.items;
+    if (!items || items.length === 0) return;
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      
+      if (item.kind === 'file') {
+        const file = item.getAsFile();
+        if (file) {
+          try {
+            const destPath = `${dropPath}/${file.name}`;
+            const content = await file.text();
+            await writeFile(destPath, content);
+          } catch (err) {
+            console.error('Failed to write dropped file:', err);
+          }
+        }
+      }
+    }
+
+    // Refresh the directory to show new files
+    await loadDirectory(dropPath);
+  }, [project?.path, loadDirectory]);
+
+  // Handle internal file/folder drag for reordering
+  const handleFileDragStart = useCallback((e: DragEvent<HTMLDivElement>, path: string) => {
+    e.dataTransfer.setData('text/plain', path);
+    e.dataTransfer.effectAllowed = 'move';
+  }, []);
+
+  const handleFolderDrop = useCallback(async (e: DragEvent<HTMLDivElement>, folderPath: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragTarget(null);
+
+    // Check if this is an internal file move
+    const sourcePath = e.dataTransfer.getData('text/plain');
+    if (sourcePath && sourcePath !== folderPath && !folderPath.startsWith(sourcePath + '/')) {
+      const fileName = sourcePath.substring(sourcePath.lastIndexOf('/') + 1);
+      const destPath = `${folderPath}/${fileName}`;
+      
+      if (sourcePath !== destPath) {
+        try {
+          await rename(sourcePath, destPath);
+          const sourceParent = sourcePath.substring(0, sourcePath.lastIndexOf('/'));
+          await loadDirectory(sourceParent);
+          await loadDirectory(folderPath);
+        } catch (err) {
+          console.error('Failed to move file:', err);
+        }
+        return;
+      }
+    }
+
+    // Otherwise, handle as external file drop
+    await handleDrop(e, folderPath);
+  }, [handleDrop, loadDirectory]);
+
   if (!project) {
     return (
       <div className="flex flex-col items-center justify-center p-4 text-center text-sm text-sidebar-fg/60">
@@ -235,7 +323,25 @@ export const FileExplorer = memo(function FileExplorer() {
   const rootFiles = files.get(project.path) || [];
 
   return (
-    <div className="text-sm">
+    <div 
+      className={cn(
+        "text-sm h-full",
+        isDragOver && "bg-[var(--accent-color)]/10 ring-2 ring-[var(--accent-color)] ring-inset"
+      )}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={(e) => handleDrop(e)}
+    >
+      {/* Drop overlay */}
+      {isDragOver && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+          <div className="flex flex-col items-center gap-2 bg-[#252526]/90 rounded-xl p-4">
+            <Upload className="h-8 w-8 text-[var(--accent-color)]" />
+            <span className="text-sm text-white">Drop files here</span>
+          </div>
+        </div>
+      )}
+      
       {/* Project header with actions */}
       <div className="sticky top-0 bg-sidebar-bg px-2 py-2">
         <div className="flex items-center justify-between">
@@ -397,6 +503,7 @@ function FileTreeItem({
   const openFile = useEditorStore((s) => s.openFile);
   const isExpanded = expanded.has(file.path);
   const children = useMemo(() => files.get(file.path) || [], [files, file.path]);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const handleClick = useCallback(() => {
     if (file.is_directory) {
@@ -469,9 +576,49 @@ function FileTreeItem({
       <div
         onClick={handleClick}
         onContextMenu={handleContextMenuEvent}
+        draggable
+        onDragStart={(e) => {
+          e.dataTransfer.setData('text/plain', file.path);
+          e.dataTransfer.effectAllowed = 'move';
+        }}
+        onDragOver={(e) => {
+          if (file.is_directory) {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragOver(true);
+          }
+        }}
+        onDragLeave={(e) => {
+          e.stopPropagation();
+          setIsDragOver(false);
+        }}
+        onDrop={async (e) => {
+          if (!file.is_directory) return;
+          e.preventDefault();
+          e.stopPropagation();
+          setIsDragOver(false);
+          
+          const sourcePath = e.dataTransfer.getData('text/plain');
+          if (sourcePath && sourcePath !== file.path && !file.path.startsWith(sourcePath + '/')) {
+            const fileName = sourcePath.substring(sourcePath.lastIndexOf('/') + 1);
+            const destPath = `${file.path}/${fileName}`;
+            
+            if (sourcePath !== destPath) {
+              try {
+                await rename(sourcePath, destPath);
+                // Force refresh by toggling
+                onToggle(file.path);
+                setTimeout(() => onToggle(file.path), 50);
+              } catch (err) {
+                console.error('Failed to move file:', err);
+              }
+            }
+          }
+        }}
         className={cn(
           "sidebar-item group",
-          "select-none"
+          "select-none",
+          isDragOver && file.is_directory && "bg-[var(--accent-color)]/30 ring-1 ring-[var(--accent-color)]"
         )}
         style={{ paddingLeft: `${8 + depth * 12}px` }}
       >
