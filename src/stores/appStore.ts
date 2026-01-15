@@ -70,7 +70,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         features,
         settings: mergedSettings,
         isTeacher: features.teacher_mode,
-        theme: localSettings?.theme || "dark",
+        theme: (localStorage.getItem("shell-theme") as "dark" | "light" | "system") || localSettings?.theme || "dark",
       });
     } catch (error) {
       console.error("Failed to initialize app:", error);

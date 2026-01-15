@@ -14,7 +14,6 @@ import {
   ArrowLeft,
   User,
   Palette,
-  Cloud,
   GraduationCap,
   Crown,
   LogOut,
@@ -39,7 +38,6 @@ const sections: SettingsSection[] = [
   { id: "account", label: "Account", icon: <User className="h-5 w-5" /> },
   { id: "editor", label: "Editor", icon: <Code className="h-5 w-5" /> },
   { id: "appearance", label: "Appearance", icon: <Palette className="h-5 w-5" /> },
-  { id: "cloud", label: "Cloud & Sync", icon: <Cloud className="h-5 w-5" /> },
 ];
 
 export function SettingsPage() {
@@ -49,9 +47,48 @@ export function SettingsPage() {
   const [activeSection, setActiveSection] = useState("account");
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [cloudSyncEnabled, setCloudSyncEnabled] = useState(
-    user?.settings?.cloudSyncEnabled ?? false
-  );
+  // Theme effect - apply theme to document
+  useEffect(() => {
+    const applyTheme = (themeSetting: string) => {
+      let actualTheme = themeSetting;
+      
+      if (themeSetting === "system") {
+        actualTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+      
+      if (actualTheme === "light") {
+        document.documentElement.classList.add("light-theme");
+        document.documentElement.style.setProperty("--background", "0 0% 96%");
+        document.documentElement.style.setProperty("--foreground", "0 0% 15%");
+        document.documentElement.style.setProperty("--card", "0 0% 100%");
+        document.documentElement.style.setProperty("--card-foreground", "0 0% 15%");
+        document.documentElement.style.setProperty("--border", "0 0% 85%");
+        document.body.style.backgroundColor = "#f5f5f5";
+        document.body.style.color = "#1e1e1e";
+      } else {
+        document.documentElement.classList.remove("light-theme");
+        document.documentElement.style.setProperty("--background", "0 0% 12%");
+        document.documentElement.style.setProperty("--foreground", "0 0% 83%");
+        document.documentElement.style.setProperty("--card", "0 0% 14%");
+        document.documentElement.style.setProperty("--card-foreground", "0 0% 83%");
+        document.documentElement.style.setProperty("--border", "0 0% 24%");
+        document.body.style.backgroundColor = "#1e1e1e";
+        document.body.style.color = "#d4d4d4";
+      }
+      
+      localStorage.setItem("shell-theme", themeSetting);
+    };
+    
+    applyTheme(theme);
+    
+    // Listen for system theme changes if using system theme
+    if (theme === "system") {
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      const handler = () => applyTheme("system");
+      mediaQuery.addEventListener("change", handler);
+      return () => mediaQuery.removeEventListener("change", handler);
+    }
+  }, [theme]);
   
   // Editor settings - initialize from appStore
   const [fontSize, setFontSize] = useState(settings?.font_size ?? 14);
@@ -152,13 +189,12 @@ export function SettingsPage() {
         theme,
       }));
 
-      // If user is logged in, sync to cloud
+      // If user is logged in, sync settings
       if (user) {
         await updateUserSettings(user.uid, {
-          cloudSyncEnabled,
           fontSize,
           fontFamily,
-          theme: theme as "dark" | "light",
+          theme: theme as "dark" | "light" | "system",
         });
       }
       
@@ -518,70 +554,7 @@ export function SettingsPage() {
             </div>
           )}
 
-          {/* Cloud & Sync Section */}
-          {activeSection === "cloud" && (
-            <div>
-              <h2 className="mb-6 text-2xl font-semibold text-white">Cloud & Sync</h2>
 
-              {!isTeacher() ? (
-                <div className="rounded-xl border border-[#fbbf24]/30 bg-[#fbbf24]/10 p-6 text-center">
-                  <Crown className="mx-auto mb-4 h-12 w-12 text-[#fbbf24]" />
-                  <h3 className="mb-2 text-lg font-medium text-white">
-                    Upgrade to Education Plan
-                  </h3>
-                  <p className="mb-4 text-[#6b7280]">
-                    Cloud sync is available for Education plan subscribers.
-                    Sync your projects across devices and access them anywhere.
-                  </p>
-                  <UpgradeButton className="rounded-lg bg-[#fbbf24] px-6 py-3 font-medium text-[#1e1e1e] hover:bg-[#f59e0b] transition-colors">
-                    Upgrade Now
-                  </UpgradeButton>
-                </div>
-              ) : (
-                <>
-                  {/* Cloud sync toggle */}
-                  <div className="mb-6 rounded-xl bg-[#252526] p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-medium text-white">Cloud Sync</h3>
-                        <p className="text-sm text-[#6b7280]">
-                          Automatically sync projects to the cloud
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => setCloudSyncEnabled(!cloudSyncEnabled)}
-                        className={`relative h-7 w-14 rounded-full transition-colors ${
-                          cloudSyncEnabled ? "bg-[var(--accent-color)]" : "bg-[#3c3c3c]"
-                        }`}
-                        aria-label={cloudSyncEnabled ? "Disable cloud sync" : "Enable cloud sync"}
-                        title={cloudSyncEnabled ? "Disable cloud sync" : "Enable cloud sync"}
-                      >
-                        <div
-                          className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-transform ${
-                            cloudSyncEnabled ? "left-8" : "left-1"
-                          }`}
-                        />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Storage usage */}
-                  <div className="mb-6 rounded-xl bg-[#252526] p-6">
-                    <h3 className="mb-4 text-lg font-medium text-white">Storage</h3>
-                    <div className="mb-2 h-2 rounded-full bg-[#3c3c3c]">
-                      <div
-                        className="h-full rounded-full bg-[var(--accent-color)]"
-                        style={{ width: "15%" }}
-                      />
-                    </div>
-                    <p className="text-sm text-[#6b7280]">
-                      150 MB of 1 GB used
-                    </p>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
         </div>
       </div>
     </div>
