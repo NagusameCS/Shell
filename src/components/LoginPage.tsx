@@ -265,8 +265,12 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
     return (
       <div className="flex h-screen w-screen flex-col items-center justify-center bg-[#1e1e1e]">
         <div className="flex w-full max-w-md flex-col items-center space-y-6 px-4">
-          {/* Shelly2 mascot */}
-          <Shelly2Container size={120} />
+          {/* Shell mascot */}
+          <img 
+            src="/favicon.svg" 
+            alt="Shell IDE" 
+            className="h-[120px] w-[120px]"
+          />
 
           {/* Instructions */}
           <div className="text-center">
