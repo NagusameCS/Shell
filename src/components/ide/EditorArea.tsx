@@ -5,7 +5,6 @@ import { useAppStore } from "@/stores/appStore";
 import { getMonacoLanguage, cn } from "@/lib/utils";
 import { X, Circle, Eye, Code, Columns, Play, Loader2 } from "lucide-react";
 import { PreviewPane } from "./PreviewPane";
-import { Command } from "@tauri-apps/plugin-shell";
 import type { editor } from "monaco-editor";
 import * as monaco from "monaco-editor";
 
@@ -90,55 +89,61 @@ export const EditorArea = memo(function EditorArea() {
     setOutput("Running " + activeFileData.name + "...\n\n");
     
     try {
-      const filePath = activeFileData.path;
+      // Import the API function
+      const { runCode } = await import("@/lib/api");
+      
+      // Determine language from file extension
       const fileName = activeFileData.name;
-      let cmd: string;
-      let args: string[];
+      let language = "python";
       
       if (fileName.endsWith(".py")) {
-        cmd = "python3";
-        args = [filePath];
+        language = "python";
       } else if (fileName.endsWith(".js")) {
-        cmd = "node";
-        args = [filePath];
+        language = "javascript";
       } else if (fileName.endsWith(".ts")) {
-        cmd = "npx";
-        args = ["ts-node", filePath];
+        language = "typescript";
       } else if (fileName.endsWith(".java")) {
-        const className = fileName.replace(".java", "");
-        const javaCmd = Command.create("exec-sh", ["-c", `cd "${project.path}" && javac "${filePath}" && java -cp "$(dirname "${filePath}")" ${className}`]);
-        const javaResult = await javaCmd.execute();
-        const javaOutput = (javaResult.stdout || "") + (javaResult.stderr ? "\n" + javaResult.stderr : "");
-        appendOutput(javaOutput);
-        setIsRunningFile(false);
-        setRunning(false);
-        return;
+        language = "java";
       } else if (fileName.endsWith(".rs")) {
-        cmd = "cargo";
-        args = ["run"];
+        language = "rust";
       } else if (fileName.endsWith(".go")) {
-        cmd = "go";
-        args = ["run", filePath];
+        language = "go";
       } else if (fileName.endsWith(".rb")) {
-        cmd = "ruby";
-        args = [filePath];
+        language = "ruby";
       } else if (fileName.endsWith(".sh")) {
-        cmd = "exec-sh";
-        args = [filePath];
+        // For shell scripts, try running directly
+        const { Command } = await import("@tauri-apps/plugin-shell");
+        const result = await Command.create("exec-sh", [activeFileData.path]).execute();
+        const output = (result.stdout || "") + (result.stderr ? "\n" + result.stderr : "");
+        appendOutput(output || "Script completed with no output.");
+        return;
       } else {
         setOutput("Unsupported file type for execution");
-        setIsRunningFile(false);
-        setRunning(false);
         return;
       }
       
-      const runCmd = Command.create(cmd, args, { cwd: project.path });
-      const runResult = await runCmd.execute();
-      const runOutput = (runResult.stdout || "") + (runResult.stderr ? "\n" + runResult.stderr : "");
-      appendOutput(runOutput);
+      // Use the proper API to run code (which handles Docker execution)
+      const result = await runCode({
+        language,
+        code: activeFileData.content,
+        project_path: project.path,
+        entry_point: activeFileData.name,
+      });
+      
+      const output = (result.stdout || "") + (result.stderr ? "\n" + result.stderr : "");
+      appendOutput(output || "Program completed with no output.");
+      
+      if (result.exit_code !== 0) {
+        appendOutput(`\nProcess exited with code ${result.exit_code}`);
+      }
     } catch (err) {
       const errorMsg = "\nError: " + (err instanceof Error ? err.message : String(err));
       appendOutput(errorMsg);
+      
+      // Provide helpful message if Docker is not running
+      if (errorMsg.includes("Docker")) {
+        appendOutput("\n\nHint: Make sure Docker Desktop is installed and running.");
+      }
     } finally {
       setIsRunningFile(false);
       setRunning(false);
@@ -347,7 +352,7 @@ export const EditorArea = memo(function EditorArea() {
           <>
             {/* Code editor - show in code or split mode */}
             {(viewMode === "code" || viewMode === "split") && (
-              <div className={cn("flex-1", viewMode === "split" && "border-r border-[#3c3c3c]")}>
+              <div className={cn("flex-1 min-w-0", viewMode === "split" && "border-r border-[#3c3c3c]")}>
                 <Suspense fallback={<EditorLoading />}>
                   <Editor
                     key={activeFile}
@@ -372,11 +377,12 @@ export const EditorArea = memo(function EditorArea() {
             
             {/* Preview pane - show in preview or split mode */}
             {isPreviewable && (viewMode === "preview" || viewMode === "split") && (
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <PreviewPane
                   content={activeFileData.content}
                   language={activeFileData.language}
                   filename={activeFileData.name}
+                  key={`preview-${activeFile}-${viewMode}`}
                 />
               </div>
             )}

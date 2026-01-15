@@ -7,7 +7,7 @@
  * - Syntax highlighting for code blocks
  */
 
-import { useMemo } from "react";
+import { useMemo, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
@@ -19,6 +19,8 @@ interface PreviewPaneProps {
 }
 
 export function PreviewPane({ content, language, filename }: PreviewPaneProps) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  
   const isMarkdown = language === "markdown" || 
                       filename.endsWith(".md") || 
                       filename.endsWith(".mdx");
@@ -58,6 +60,15 @@ ${content}
     const blob = new Blob([htmlContent], { type: "text/html" });
     return URL.createObjectURL(blob);
   }, [content, isHtml]);
+  
+  // Cleanup blob URL when component unmounts or URL changes
+  useEffect(() => {
+    return () => {
+      if (htmlPreviewUrl) {
+        URL.revokeObjectURL(htmlPreviewUrl);
+      }
+    };
+  }, [htmlPreviewUrl]);
 
   if (isMarkdown) {
     return (

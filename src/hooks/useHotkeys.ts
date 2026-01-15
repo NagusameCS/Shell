@@ -32,13 +32,21 @@ export function useHotkeys() {
     closeCurrentTab, 
     tabs, 
     activeTabId,
-    setActiveTab 
+    setActiveTab,
+    createNewFile
   } = useEditorStore();
 
   const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
 
   const hotkeys: HotkeyHandler[] = [
     // File operations
+    {
+      key: "n",
+      ctrl: !isMac,
+      cmd: isMac,
+      handler: () => createNewFile(),
+      description: "New file",
+    },
     {
       key: "s",
       ctrl: !isMac,

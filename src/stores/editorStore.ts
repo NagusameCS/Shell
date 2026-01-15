@@ -41,6 +41,7 @@ interface EditorState {
   updateFileContent: (path: string, content: string) => void;
   markFileSaved: (path: string) => void;
   saveCurrentFile: () => Promise<void>;
+  createNewFile: () => void;
 
   // Execution
   isRunning: boolean;
@@ -131,6 +132,26 @@ export const useEditorStore = create<EditorState>()(
         if (activeFile) {
           closeFile(activeFile);
         }
+      },
+      
+      createNewFile: () => {
+        // Find the next untitled number
+        const { openFiles } = get();
+        let num = 1;
+        while (openFiles.some(f => f.path === `untitled:Untitled-${num}`)) {
+          num++;
+        }
+        
+        const newFile: OpenFile = {
+          path: `untitled:Untitled-${num}`,
+          name: `Untitled-${num}`,
+          content: "",
+          language: "plaintext",
+          modified: false,
+        };
+        
+        const { openFile } = get();
+        openFile(newFile);
       },
 
       setActiveFile: (path) => {
