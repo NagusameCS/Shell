@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import Editor, { OnMount } from "@monaco-editor/react";
+import { useRef, useState, memo, useMemo, useCallback, lazy, Suspense } from "react";
+import type { OnMount } from "@monaco-editor/react";
 import { useEditorStore } from "@/stores/editorStore";
 import { useAppStore } from "@/stores/appStore";
 import { getMonacoLanguage, cn } from "@/lib/utils";
@@ -8,36 +8,52 @@ import { PreviewPane } from "./PreviewPane";
 import { Command } from "@tauri-apps/plugin-shell";
 import type { editor } from "monaco-editor";
 
-export function EditorArea() {
-  const { 
-    openFiles, 
-    activeFile, 
-    setActiveFile, 
-    closeFile, 
-    updateFileContent,
-    setOutput, 
-    setRunning, 
-    appendOutput 
-  } = useEditorStore();
-  const { settings, project, togglePanel } = useAppStore();
+// Lazy load Monaco editor to improve initial load time
+const Editor = lazy(() => import("@monaco-editor/react").then(mod => ({ default: mod.default })));
+
+// Loading fallback for Monaco
+const EditorLoading = () => (
+  <div className="flex h-full items-center justify-center bg-[#1e1e1e]">
+    <Loader2 className="h-8 w-8 animate-spin text-[#7DD3FC]" />
+  </div>
+);
+
+export const EditorArea = memo(function EditorArea() {
+  // Use selectors for fine-grained subscriptions
+  const openFiles = useEditorStore((s) => s.openFiles);
+  const activeFile = useEditorStore((s) => s.activeFile);
+  const setActiveFile = useEditorStore((s) => s.setActiveFile);
+  const closeFile = useEditorStore((s) => s.closeFile);
+  const updateFileContent = useEditorStore((s) => s.updateFileContent);
+  const setOutput = useEditorStore((s) => s.setOutput);
+  const setRunning = useEditorStore((s) => s.setRunning);
+  const appendOutput = useEditorStore((s) => s.appendOutput);
+  
+  const settings = useAppStore((s) => s.settings);
+  const project = useAppStore((s) => s.project);
+  const togglePanel = useAppStore((s) => s.togglePanel);
+  
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const [viewMode, setViewMode] = useState<"code" | "preview" | "split">("code");
   const [isRunningFile, setIsRunningFile] = useState(false);
 
-  const activeFileData = openFiles.find((f) => f.path === activeFile);
+  // Memoize active file data lookup
+  const activeFileData = useMemo(() => 
+    openFiles.find((f) => f.path === activeFile),
+    [openFiles, activeFile]
+  );
   
-  // Check if file supports preview
-  const isPreviewable = activeFileData && (
+  // Memoize file type checks
+  const isPreviewable = useMemo(() => activeFileData && (
     activeFileData.language === "markdown" ||
     activeFileData.language === "html" ||
     activeFileData.name.endsWith(".md") ||
     activeFileData.name.endsWith(".mdx") ||
     activeFileData.name.endsWith(".html") ||
     activeFileData.name.endsWith(".htm")
-  );
+  ), [activeFileData]);
 
-  // Check if file is executable/runnable
-  const isRunnable = activeFileData && (
+  const isRunnable = useMemo(() => activeFileData && (
     activeFileData.language === "python" ||
     activeFileData.language === "javascript" ||
     activeFileData.language === "typescript" ||
@@ -50,14 +66,15 @@ export function EditorArea() {
     activeFileData.name.endsWith(".go") ||
     activeFileData.name.endsWith(".rb") ||
     activeFileData.name.endsWith(".sh")
-  );
+  ), [activeFileData]);
 
-  const handleRunFile = async () => {
+  // Memoize run handler
+  const handleRunFile = useCallback(async () => {
     if (!activeFileData || !project?.path) return;
     
     setIsRunningFile(true);
     setRunning(true);
-    togglePanel(); // Show the output panel
+    togglePanel();
     setOutput("Running " + activeFileData.name + "...\n\n");
     
     try {
@@ -66,7 +83,6 @@ export function EditorArea() {
       let cmd: string;
       let args: string[];
       
-      // Determine how to run based on file extension
       if (fileName.endsWith(".py")) {
         cmd = "python3";
         args = [filePath];
@@ -77,7 +93,6 @@ export function EditorArea() {
         cmd = "npx";
         args = ["ts-node", filePath];
       } else if (fileName.endsWith(".java")) {
-        // For Java, compile first then run
         const className = fileName.replace(".java", "");
         const javaCmd = Command.create("exec-sh", ["-c", `cd "${project.path}" && javac "${filePath}" && java -cp "$(dirname "${filePath}")" ${className}`]);
         const javaResult = await javaCmd.execute();
@@ -116,12 +131,12 @@ export function EditorArea() {
       setIsRunningFile(false);
       setRunning(false);
     }
-  };
+  }, [activeFileData, project?.path, setRunning, togglePanel, setOutput, appendOutput]);
 
-  const handleEditorMount: OnMount = (editor, monaco) => {
+  // Memoize editor mount handler
+  const handleEditorMount: OnMount = useCallback((editor, monaco) => {
     editorRef.current = editor;
 
-    // Configure editor theme
     monaco.editor.defineTheme("shell-dark", {
       base: "vs-dark",
       inherit: true,
@@ -142,13 +157,32 @@ export function EditorArea() {
       },
     });
     monaco.editor.setTheme("shell-dark");
-  };
+  }, []);
 
-  const handleEditorChange = (value: string | undefined) => {
+  // Memoize editor change handler
+  const handleEditorChange = useCallback((value: string | undefined) => {
     if (activeFile && value !== undefined) {
       updateFileContent(activeFile, value);
     }
-  };
+  }, [activeFile, updateFileContent]);
+
+  // Memoize editor options
+  const editorOptions = useMemo(() => ({
+    fontSize: settings?.font_size || 14,
+    fontFamily: settings?.font_family || "JetBrains Mono, monospace",
+    tabSize: settings?.tab_size || 4,
+    minimap: { enabled: viewMode !== "split" && (settings?.show_minimap ?? true) },
+    wordWrap: settings?.word_wrap ? "on" as const : "off" as const,
+    lineNumbers: settings?.line_numbers ? "on" as const : "off" as const,
+    automaticLayout: true,
+    scrollBeyondLastLine: false,
+    renderWhitespace: "selection" as const,
+    bracketPairColorization: { enabled: true },
+    guides: {
+      bracketPairs: true,
+      indentation: true,
+    },
+  }), [settings, viewMode]);
 
   if (openFiles.length === 0) {
     return (
@@ -272,31 +306,19 @@ export function EditorArea() {
             {/* Code editor - show in code or split mode */}
             {(viewMode === "code" || viewMode === "split") && (
               <div className={cn("flex-1", viewMode === "split" && "border-r border-[#3c3c3c]")}>
-                <Editor
-                  key={activeFile}
-                  height="100%"
-                  language={getMonacoLanguage(activeFileData.language)}
-                  value={activeFileData.content}
-                  onChange={handleEditorChange}
-                  onMount={handleEditorMount}
-                  options={{
-                    fontSize: settings?.font_size || 14,
-                    fontFamily: settings?.font_family || "JetBrains Mono, monospace",
-                    tabSize: settings?.tab_size || 4,
-                    minimap: { enabled: viewMode !== "split" && (settings?.show_minimap ?? true) },
-                    wordWrap: settings?.word_wrap ? "on" : "off",
-                    lineNumbers: settings?.line_numbers ? "on" : "off",
-                    automaticLayout: true,
-                    scrollBeyondLastLine: false,
-                    renderWhitespace: "selection",
-                    bracketPairColorization: { enabled: true },
-                    guides: {
-                      bracketPairs: true,
-                      indentation: true,
-                    },
-                  }}
-                  theme="shell-dark"
-                />
+                <Suspense fallback={<EditorLoading />}>
+                  <Editor
+                    key={activeFile}
+                    height="100%"
+                    language={getMonacoLanguage(activeFileData.language)}
+                    value={activeFileData.content}
+                    onChange={handleEditorChange}
+                    onMount={handleEditorMount}
+                    options={editorOptions}
+                    theme="shell-dark"
+                    loading={<EditorLoading />}
+                  />
+                </Suspense>
               </div>
             )}
             
@@ -315,4 +337,4 @@ export function EditorArea() {
       </div>
     </div>
   );
-}
+});

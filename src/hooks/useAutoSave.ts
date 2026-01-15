@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useMemo } from "react";
 import { useEditorStore } from "@/stores/editorStore";
 import { useAppStore } from "@/stores/appStore";
 import { writeFile } from "@/lib/api";
@@ -6,23 +6,28 @@ import { writeFile } from "@/lib/api";
 /**
  * Hook that handles auto-saving of files when user stops typing.
  * Also handles saving all files on app shutdown.
+ * Optimized to minimize re-renders and unnecessary saves.
  */
 export function useAutoSave() {
-  const { openFiles, markFileSaved, saveSession } = useEditorStore();
-  const { settings } = useAppStore();
+  // Use selectors for fine-grained subscriptions
+  const openFiles = useEditorStore((s) => s.openFiles);
+  const markFileSaved = useEditorStore((s) => s.markFileSaved);
+  const saveSession = useEditorStore((s) => s.saveSession);
+  const settings = useAppStore((s) => s.settings);
+  
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastContentRef = useRef<Map<string, string>>(new Map());
+  const isSavingRef = useRef(false);
 
-  // Get auto-save delay from settings (default 1500ms after stop typing)
-  const autoSaveDelay = settings?.auto_save_delay_ms || 1500;
-  const autoSaveEnabled = settings?.auto_save ?? true;
+  // Memoize settings
+  const autoSaveDelay = useMemo(() => settings?.auto_save_delay_ms || 1500, [settings?.auto_save_delay_ms]);
+  const autoSaveEnabled = useMemo(() => settings?.auto_save ?? true, [settings?.auto_save]);
 
-  // Save a single file
+  // Save a single file - stable reference
   const saveFile = useCallback(async (path: string, content: string) => {
     try {
       await writeFile(path, content);
       markFileSaved(path);
-      console.log(`Auto-saved: ${path.split("/").pop()}`);
       return true;
     } catch (err) {
       console.error("Auto-save failed:", path, err);
@@ -30,50 +35,62 @@ export function useAutoSave() {
     }
   }, [markFileSaved]);
 
-  // Save all modified files
+  // Save all modified files - stable reference with optimized filter
   const saveAllFiles = useCallback(async () => {
-    const modifiedFiles = openFiles.filter((f) => f.modified && !f.readonly);
+    if (isSavingRef.current) return; // Prevent concurrent saves
     
+    const modifiedFiles = openFiles.filter((f) => f.modified && !f.readonly);
     if (modifiedFiles.length === 0) return;
 
-    console.log(`Saving ${modifiedFiles.length} modified file(s)...`);
+    isSavingRef.current = true;
     
-    const savePromises = modifiedFiles.map((file) =>
-      saveFile(file.path, file.content)
-    );
-    
-    await Promise.all(savePromises);
-    
-    // Also save the session
-    saveSession();
+    try {
+      // Batch save operations
+      await Promise.all(
+        modifiedFiles.map((file) => saveFile(file.path, file.content))
+      );
+      saveSession();
+    } finally {
+      isSavingRef.current = false;
+    }
   }, [openFiles, saveFile, saveSession]);
 
-  // Debounced auto-save when content changes
+  // Debounced auto-save when content changes - optimized to avoid unnecessary effects
   useEffect(() => {
     if (!autoSaveEnabled) return;
 
-    // Check if any file content has changed
-    const modifiedFiles = openFiles.filter((f) => {
-      if (!f.modified || f.readonly) return false;
+    // Check if any file content has actually changed
+    let hasChanges = false;
+    const filesToSave: typeof openFiles = [];
+    
+    for (const f of openFiles) {
+      if (!f.modified || f.readonly) continue;
       const lastContent = lastContentRef.current.get(f.path);
       if (lastContent !== f.content) {
         lastContentRef.current.set(f.path, f.content);
-        return true;
+        filesToSave.push(f);
+        hasChanges = true;
       }
-      return false;
-    });
+    }
 
-    if (modifiedFiles.length === 0) return;
+    if (!hasChanges) return;
 
     // Clear existing timeout
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
 
-    // Set new timeout for auto-save
+    // Set new timeout for auto-save with batch processing
     saveTimeoutRef.current = setTimeout(async () => {
-      for (const file of modifiedFiles) {
-        await saveFile(file.path, file.content);
+      if (isSavingRef.current) return;
+      isSavingRef.current = true;
+      
+      try {
+        await Promise.all(
+          filesToSave.map((file) => saveFile(file.path, file.content))
+        );
+      } finally {
+        isSavingRef.current = false;
       }
     }, autoSaveDelay);
 

@@ -5,7 +5,7 @@
  * Gracefully degrades when cloud is not available
  */
 
-import { useState } from "react";
+import { useState, useEffect, memo } from "react";
 import { Cloud, CloudOff, Crown, Lock, Wifi, WifiOff } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { UpgradeButton } from "./UpgradeModal";
@@ -190,11 +190,21 @@ export function OfflineBanner() {
     typeof navigator !== "undefined" ? navigator.onLine : true
   );
   
-  // Listen for online/offline events
-  if (typeof window !== "undefined") {
-    window.addEventListener("online", () => setIsOnline(true));
-    window.addEventListener("offline", () => setIsOnline(false));
-  }
+  // Listen for online/offline events - properly using useEffect
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
   
   if (isOnline) return null;
   

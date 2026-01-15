@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { useAppStore } from "@/stores/appStore";
 import { useEditorStore } from "@/stores/editorStore";
 import { listDirectory, createFile, deleteFile } from "@/lib/api";
@@ -30,9 +30,37 @@ import {
   RefreshCw,
 } from "lucide-react";
 
-export function FileExplorer() {
-  const { project } = useAppStore();
-  const { openFile, closeFile } = useEditorStore();
+// Memoized file icon lookup to avoid switch recreation
+const getFileIconByExtension = (ext: string) => {
+  switch (ext) {
+    case "js": return <FileCode className="h-4 w-4 text-yellow-400" />;
+    case "jsx": return <FileCode className="h-4 w-4 text-[#61dafb]" />;
+    case "ts": return <FileCode className="h-4 w-4 text-blue-500" />;
+    case "tsx": return <FileCode className="h-4 w-4 text-[#61dafb]" />;
+    case "py": return <FileCode className="h-4 w-4 text-[#3776ab]" />;
+    case "rs": return <FileCode className="h-4 w-4 text-orange-600" />;
+    case "java": return <Coffee className="h-4 w-4 text-red-500" />;
+    case "c": case "h": return <Hash className="h-4 w-4 text-blue-400" />;
+    case "cpp": case "hpp": case "cc": return <Hash className="h-4 w-4 text-pink-500" />;
+    case "json": return <FileJson className="h-4 w-4 text-yellow-500" />;
+    case "yaml": case "yml": return <FileJson className="h-4 w-4 text-red-400" />;
+    case "toml": return <FileJson className="h-4 w-4 text-gray-400" />;
+    case "html": return <Globe className="h-4 w-4 text-orange-500" />;
+    case "css": return <FileCode className="h-4 w-4 text-blue-400" />;
+    case "scss": case "sass": return <FileCode className="h-4 w-4 text-pink-400" />;
+    case "md": case "mdx": return <FileText className="h-4 w-4 text-[#7DD3FC]" />;
+    case "txt": return <FileText className="h-4 w-4 text-gray-400" />;
+    case "png": case "jpg": case "jpeg": case "gif": case "svg": case "webp": 
+      return <Image className="h-4 w-4 text-purple-400" />;
+    case "sql": case "db": case "sqlite": return <Database className="h-4 w-4 text-blue-400" />;
+    default: return <File className="h-4 w-4 text-sidebar-fg/50" />;
+  }
+};
+
+export const FileExplorer = memo(function FileExplorer() {
+  const project = useAppStore((s) => s.project);
+  const openFile = useEditorStore((s) => s.openFile);
+  const closeFile = useEditorStore((s) => s.closeFile);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [files, setFiles] = useState<Map<string, FileInfo[]>>(new Map());
   const [newItemPath, setNewItemPath] = useState<string | null>(null);
@@ -55,34 +83,33 @@ export function FileExplorer() {
     }
   }, [project?.path]);
 
-  const loadDirectory = async (path: string) => {
+  const loadDirectory = useCallback(async (path: string) => {
     try {
       const contents = await listDirectory(path);
       setFiles((prev) => new Map(prev).set(path, contents.entries));
     } catch (error) {
       console.error("Failed to load directory:", error);
     }
-  };
+  }, []);
 
-  const refreshAll = () => {
+  const refreshAll = useCallback(() => {
     if (project?.path) {
       setFiles(new Map());
       loadDirectory(project.path);
     }
-  };
+  }, [project?.path, loadDirectory]);
 
-  const handleNewFile = (parentPath?: string) => {
+  const handleNewFile = useCallback((parentPath?: string) => {
     const path = parentPath || project?.path;
     if (path) {
       setNewItemPath(path);
       setNewItemType("file");
       setNewItemName("");
-      // Expand the parent folder
       setExpanded((prev) => new Set(prev).add(path));
     }
-  };
+  }, [project?.path]);
 
-  const handleNewFolder = (parentPath?: string) => {
+  const handleNewFolder = useCallback((parentPath?: string) => {
     const path = parentPath || project?.path;
     if (path) {
       setNewItemPath(path);
@@ -90,9 +117,9 @@ export function FileExplorer() {
       setNewItemName("");
       setExpanded((prev) => new Set(prev).add(path));
     }
-  };
+  }, [project?.path]);
 
-  const handleCreateItem = async () => {
+  const handleCreateItem = useCallback(async () => {
     if (!newItemPath || !newItemName.trim()) {
       setNewItemPath(null);
       return;
@@ -123,20 +150,22 @@ export function FileExplorer() {
 
     setNewItemPath(null);
     setNewItemName("");
-  };
+  }, [newItemPath, newItemName, newItemType, openFile, loadDirectory]);
 
-  const toggleExpanded = (path: string) => {
-    const newExpanded = new Set(expanded);
-    if (newExpanded.has(path)) {
-      newExpanded.delete(path);
-    } else {
-      newExpanded.add(path);
-      loadDirectory(path);
-    }
-    setExpanded(newExpanded);
-  };
+  const toggleExpanded = useCallback((path: string) => {
+    setExpanded((prev) => {
+      const newExpanded = new Set(prev);
+      if (newExpanded.has(path)) {
+        newExpanded.delete(path);
+      } else {
+        newExpanded.add(path);
+        loadDirectory(path);
+      }
+      return newExpanded;
+    });
+  }, [loadDirectory]);
 
-  const handleRename = async (oldPath: string, newName: string) => {
+  const handleRename = useCallback(async (oldPath: string, newName: string) => {
     const parentPath = oldPath.substring(0, oldPath.lastIndexOf("/"));
     const newPath = `${parentPath}/${newName}`;
     try {
@@ -146,26 +175,25 @@ export function FileExplorer() {
       console.error("Failed to rename:", error);
     }
     setRenamingPath(null);
-  };
+  }, [loadDirectory]);
 
-  const handleDelete = async (path: string, isDirectory: boolean) => {
+  const handleDelete = useCallback(async (path: string, isDirectory: boolean) => {
     try {
       await remove(path, { recursive: isDirectory });
       const parentPath = path.substring(0, path.lastIndexOf("/"));
       await loadDirectory(parentPath);
-      // Close the file if it's open
       closeFile(path);
     } catch (error) {
       console.error("Failed to delete:", error);
     }
-  };
+  }, [loadDirectory, closeFile]);
 
-  const handleCopyPath = (path: string) => {
+  const handleCopyPath = useCallback((path: string) => {
     navigator.clipboard.writeText(path);
     setClipboard(path);
-  };
+  }, []);
 
-  const handleContextMenuAction = (
+  const handleContextMenuAction = useCallback((
     action: string,
     path: string,
     name: string,
@@ -193,7 +221,7 @@ export function FileExplorer() {
         shellOpen(isDirectory ? path : path.substring(0, path.lastIndexOf("/")));
         break;
     }
-  };
+  }, [handleCopyPath, handleDelete, handleNewFile, handleNewFolder]);
 
   if (!project) {
     return (
@@ -323,7 +351,7 @@ export function FileExplorer() {
       )}
     </div>
   );
-}
+});
 
 interface FileTreeItemProps {
   file: FileInfo;
@@ -366,22 +394,20 @@ function FileTreeItem({
   onRenameSubmit,
   onContextMenu,
 }: FileTreeItemProps) {
-  const { openFile } = useEditorStore();
+  const openFile = useEditorStore((s) => s.openFile);
   const isExpanded = expanded.has(file.path);
-  const children = files.get(file.path) || [];
+  const children = useMemo(() => files.get(file.path) || [], [files, file.path]);
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     if (file.is_directory) {
       onToggle(file.path);
     } else {
-      // Open file
       handleOpenFile();
     }
-  };
+  }, [file.is_directory, file.path, onToggle]);
 
-  const handleOpenFile = async () => {
+  const handleOpenFile = useCallback(async () => {
     try {
-      // Read file content
       const content = await readTextFile(file.path);
       const ext = getFileExtension(file.path);
       const language = getLanguageFromExtension(ext);
@@ -396,9 +422,10 @@ function FileTreeItem({
     } catch (error) {
       console.error("Failed to open file:", error);
     }
-  };
+  }, [file.path, file.name, openFile]);
 
-  const getFileIcon = () => {
+  // Memoize file icon to avoid recreating on every render
+  const fileIcon = useMemo(() => {
     if (file.is_directory) {
       return isExpanded ? (
         <FolderOpen className="h-4 w-4 text-amber-500" />
@@ -417,77 +444,13 @@ function FileTreeItem({
     if (name === "dockerfile") return <Database className="h-4 w-4 text-blue-400" />;
     if (name.startsWith(".env")) return <Cog className="h-4 w-4 text-yellow-600" />;
     
-    switch (ext) {
-      // JavaScript/TypeScript
-      case "js":
-        return <FileCode className="h-4 w-4 text-yellow-400" />;
-      case "jsx":
-        return <FileCode className="h-4 w-4 text-[#61dafb]" />;
-      case "ts":
-        return <FileCode className="h-4 w-4 text-blue-500" />;
-      case "tsx":
-        return <FileCode className="h-4 w-4 text-[#61dafb]" />;
-      // Python  
-      case "py":
-        return <FileCode className="h-4 w-4 text-[#3776ab]" />;
-      // Rust
-      case "rs":
-        return <FileCode className="h-4 w-4 text-orange-600" />;
-      // Java
-      case "java":
-        return <Coffee className="h-4 w-4 text-red-500" />;
-      // C/C++
-      case "c":
-      case "h":
-        return <Hash className="h-4 w-4 text-blue-400" />;
-      case "cpp":
-      case "hpp":
-      case "cc":
-        return <Hash className="h-4 w-4 text-pink-500" />;
-      // Data
-      case "json":
-        return <FileJson className="h-4 w-4 text-yellow-500" />;
-      case "yaml":
-      case "yml":
-        return <FileJson className="h-4 w-4 text-red-400" />;
-      case "toml":
-        return <FileJson className="h-4 w-4 text-gray-400" />;
-      // Web
-      case "html":
-        return <Globe className="h-4 w-4 text-orange-500" />;
-      case "css":
-        return <FileCode className="h-4 w-4 text-blue-400" />;
-      case "scss":
-      case "sass":
-        return <FileCode className="h-4 w-4 text-pink-400" />;
-      // Documents
-      case "md":
-      case "mdx":
-        return <FileText className="h-4 w-4 text-[#7DD3FC]" />;
-      case "txt":
-        return <FileText className="h-4 w-4 text-gray-400" />;
-      // Images
-      case "png":
-      case "jpg":
-      case "jpeg":
-      case "gif":
-      case "svg":
-      case "webp":
-        return <Image className="h-4 w-4 text-purple-400" />;
-      // Database
-      case "sql":
-      case "db":
-      case "sqlite":
-        return <Database className="h-4 w-4 text-blue-400" />;
-      default:
-        return <File className="h-4 w-4 text-sidebar-fg/50" />;
-    }
-  };
+    return getFileIconByExtension(ext);
+  }, [file.is_directory, file.path, file.name, isExpanded]);
 
-  const handleContextMenuEvent = (e: React.MouseEvent) => {
+  const handleContextMenuEvent = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     onContextMenu(e, file);
-  };
+  }, [onContextMenu, file]);
 
   const isRenaming = renamingPath === file.path;
 
@@ -512,7 +475,7 @@ function FileTreeItem({
           </span>
         )}
         {!file.is_directory && <span className="w-4" />}
-        {getFileIcon()}
+        {fileIcon}
         {isRenaming ? (
           <input
             type="text"

@@ -1,3 +1,4 @@
+import { memo, useMemo, lazy, Suspense } from "react";
 import { useAppStore } from "@/stores/appStore";
 import { useAuthStore } from "@/stores/authStore";
 import { FileExplorer } from "./FileExplorer";
@@ -19,50 +20,85 @@ import {
   EyeOff,
   WrapText,
   Save,
+  Loader2,
 } from "lucide-react";
 
-export function Sidebar() {
-  const { activeView } = useAppStore();
+// Loading fallback for lazy-loaded panels
+const PanelLoading = () => (
+  <div className="flex h-full items-center justify-center">
+    <Loader2 className="h-5 w-5 animate-spin text-sidebar-fg/40" />
+  </div>
+);
+
+// Header title map
+const HEADER_TITLES: Record<string, string> = {
+  explorer: "Explorer",
+  lessons: "Lessons",
+  search: "Search",
+  stepdebug: "Step-by-Step",
+  extensions: "Extensions",
+  settings: "Settings",
+  docs: "Documentation",
+};
+
+export const Sidebar = memo(function Sidebar() {
+  const activeView = useAppStore((s) => s.activeView);
+
+  // Memoize header title
+  const headerTitle = useMemo(() => HEADER_TITLES[activeView] || "", [activeView]);
 
   return (
     <div className="flex w-60 flex-col border-r border-panel-border bg-sidebar-bg">
       {/* Header */}
       <div className="flex h-9 items-center border-b border-panel-border px-4 text-xs font-medium uppercase tracking-wide text-sidebar-fg/60">
-        {activeView === "explorer" && "Explorer"}
-        {activeView === "lessons" && "Lessons"}
-        {activeView === "search" && "Search"}
-        {activeView === "stepdebug" && "Step-by-Step"}
-        {activeView === "extensions" && "Extensions"}
-        {activeView === "settings" && "Settings"}
-        {activeView === "docs" && "Documentation"}
+        {headerTitle}
       </div>
 
-      {/* Content */}
+      {/* Content - conditional rendering with memoized components */}
       <div className="flex-1 overflow-auto">
-        {activeView === "explorer" && <FileExplorer />}
-        {activeView === "lessons" && <LessonBrowser />}
-        {activeView === "search" && <SearchPanel />}
-        {activeView === "stepdebug" && <StepDebugPanel />}
-        {activeView === "extensions" && <ExtensionsPanel />}
-        {activeView === "settings" && <SettingsPanel />}
-        {activeView === "docs" && <DocsPanel />}
+        <SidebarContent activeView={activeView} />
       </div>
     </div>
   );
-}
+});
 
-function ExtensionsPanel() {
+// Separate content component to prevent re-renders
+const SidebarContent = memo(function SidebarContent({ activeView }: { activeView: string }) {
+  switch (activeView) {
+    case "explorer":
+      return <FileExplorer />;
+    case "lessons":
+      return <LessonBrowser />;
+    case "search":
+      return <SearchPanel />;
+    case "stepdebug":
+      return <StepDebugPanel />;
+    case "extensions":
+      return <ExtensionsPanel />;
+    case "settings":
+      return <SettingsPanel />;
+    case "docs":
+      return <DocsPanel />;
+    default:
+      return null;
+  }
+});
+
+const ExtensionsPanel = memo(function ExtensionsPanel() {
   return (
     <div className="p-4 text-sm text-sidebar-fg/60">
       <p>Extensions coming soon...</p>
     </div>
   );
-}
+});
 
-function SettingsPanel() {
+const SettingsPanel = memo(function SettingsPanel() {
   const navigate = useNavigate();
-  const { settings, updateSettings, theme, setTheme } = useAppStore();
-  const { user } = useAuthStore();
+  const settings = useAppStore((s) => s.settings);
+  const updateSettings = useAppStore((s) => s.updateSettings);
+  const theme = useAppStore((s) => s.theme);
+  const setTheme = useAppStore((s) => s.setTheme);
+  const user = useAuthStore((s) => s.user);
 
   const toggleSetting = (key: "show_minimap" | "word_wrap" | "line_numbers" | "auto_save") => {
     if (settings) {
@@ -70,7 +106,7 @@ function SettingsPanel() {
     }
   };
 
-  const quickSettings = [
+  const quickSettings = useMemo(() => [
     {
       label: "Theme",
       icon: theme === "dark" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />,
@@ -89,9 +125,9 @@ function SettingsPanel() {
       value: `${settings?.tab_size || 4} spaces`,
       onClick: () => navigate("/settings"),
     },
-  ];
+  ], [theme, settings?.font_size, settings?.tab_size, setTheme, navigate]);
 
-  const toggleSettings = [
+  const toggleSettings = useMemo(() => [
     {
       label: "Minimap",
       enabled: settings?.show_minimap ?? true,
@@ -116,7 +152,7 @@ function SettingsPanel() {
       icon: <Save className="h-4 w-4" />,
       onToggle: () => toggleSetting("auto_save"),
     },
-  ];
+  ], [settings?.show_minimap, settings?.word_wrap, settings?.line_numbers, settings?.auto_save, toggleSetting]);
 
   return (
     <div className="p-3">
@@ -191,63 +227,62 @@ function SettingsPanel() {
       )}
     </div>
   );
-}
+});
 
-function DocsPanel() {
-  // Language documentation links
-  const languages = [
-    {
-      name: "Python",
-      icon: "🐍",
-      docs: "https://docs.python.org/3/",
-      description: "Official Python documentation",
-    },
-    {
-      name: "JavaScript",
-      icon: "📜",
-      docs: "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
-      description: "MDN JavaScript Guide",
-    },
-    {
-      name: "TypeScript",
-      icon: "💎",
-      docs: "https://www.typescriptlang.org/docs/",
-      description: "TypeScript Handbook",
-    },
-    {
-      name: "Rust",
-      icon: "🦀",
-      docs: "https://doc.rust-lang.org/book/",
-      description: "The Rust Programming Language",
-    },
-    {
-      name: "Go",
-      icon: "🐹",
-      docs: "https://go.dev/doc/",
-      description: "Go Documentation",
-    },
-    {
-      name: "C++",
-      icon: "⚡",
-      docs: "https://en.cppreference.com/w/",
-      description: "C++ Reference",
-    },
-    {
-      name: "Java",
-      icon: "☕",
-      docs: "https://docs.oracle.com/en/java/",
-      description: "Java SE Documentation",
-    },
-    {
-      name: "C#",
-      icon: "🎯",
-      docs: "https://learn.microsoft.com/en-us/dotnet/csharp/",
-      description: "C# Documentation",
-    },
-  ];
+// Language documentation data - static, no need to recreate
+const LANGUAGE_DOCS = [
+  {
+    name: "Python",
+    icon: "🐍",
+    docs: "https://docs.python.org/3/",
+    description: "Official Python documentation",
+  },
+  {
+    name: "JavaScript",
+    icon: "📜",
+    docs: "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
+    description: "MDN JavaScript Guide",
+  },
+  {
+    name: "TypeScript",
+    icon: "💎",
+    docs: "https://www.typescriptlang.org/docs/",
+    description: "TypeScript Handbook",
+  },
+  {
+    name: "Rust",
+    icon: "🦀",
+    docs: "https://doc.rust-lang.org/book/",
+    description: "The Rust Programming Language",
+  },
+  {
+    name: "Go",
+    icon: "🐹",
+    docs: "https://go.dev/doc/",
+    description: "Go Documentation",
+  },
+  {
+    name: "C++",
+    icon: "⚡",
+    docs: "https://en.cppreference.com/w/",
+    description: "C++ Reference",
+  },
+  {
+    name: "Java",
+    icon: "☕",
+    docs: "https://docs.oracle.com/en/java/",
+    description: "Java SE Documentation",
+  },
+  {
+    name: "C#",
+    icon: "🎯",
+    docs: "https://learn.microsoft.com/en-us/dotnet/csharp/",
+    description: "C# Documentation",
+  },
+];
 
+const DocsPanel = memo(function DocsPanel() {
   const openDocs = (url: string) => {
-    // Open in system browser
     import("@tauri-apps/plugin-shell").then(({ open }) => {
       open(url);
     });
@@ -260,7 +295,7 @@ function DocsPanel() {
       </p>
       
       <div className="space-y-1">
-        {languages.map((lang) => (
+        {LANGUAGE_DOCS.map((lang) => (
           <button
             key={lang.name}
             onClick={() => openDocs(lang.docs)}
@@ -308,4 +343,4 @@ function DocsPanel() {
       </div>
     </div>
   );
-}
+});

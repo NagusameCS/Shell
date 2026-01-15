@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, memo } from "react";
 import { 
   Search, 
   X, 
@@ -28,7 +28,7 @@ interface SearchResult {
   }[];
 }
 
-export function SearchPanel() {
+export const SearchPanel = memo(function SearchPanel() {
   const [searchQuery, setSearchQuery] = useState("");
   const [replaceQuery, setReplaceQuery] = useState("");
   const [showReplace, setShowReplace] = useState(false);
@@ -40,10 +40,20 @@ export function SearchPanel() {
   const [isSearching, setIsSearching] = useState(false);
   const [totalMatches, setTotalMatches] = useState(0);
   
-  const { openFiles, openFile, activeFile } = useEditorStore();
-  const { project } = useAppStore();
+  // Use selectors for fine-grained subscriptions
+  const openFiles = useEditorStore((s) => s.openFiles);
+  const openFile = useEditorStore((s) => s.openFile);
+  const project = useAppStore((s) => s.project);
+  
+  // Use ref to track debounce timer
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
-  // Search in open files
+  // Memoize escape regex helper
+  const escapeRegexFn = useCallback((string: string): string => {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }, []);
+
+  // Memoize search function
   const performSearch = useCallback(() => {
     if (!searchQuery.trim()) {
       setResults([]);
@@ -52,68 +62,85 @@ export function SearchPanel() {
     }
 
     setIsSearching(true);
-    const searchResults: SearchResult[] = [];
-    let matchCount = 0;
+    
+    // Use requestIdleCallback or setTimeout to not block UI
+    const searchTask = () => {
+      const searchResults: SearchResult[] = [];
+      let matchCount = 0;
 
-    // Build regex pattern
-    let pattern: RegExp;
-    try {
-      let flags = "g" + (caseSensitive ? "" : "i");
-      let query = useRegex ? searchQuery : escapeRegex(searchQuery);
-      if (wholeWord) {
-        query = `\\b${query}\\b`;
-      }
-      pattern = new RegExp(query, flags);
-    } catch (e) {
-      // Invalid regex
-      setIsSearching(false);
-      return;
-    }
-
-    // Search in open files
-    for (const file of openFiles) {
-      const matches: SearchResult["matches"] = [];
-      const lines = file.content.split("\n");
-
-      lines.forEach((line, lineIndex) => {
-        let match;
-        pattern.lastIndex = 0;
-        while ((match = pattern.exec(line)) !== null) {
-          matches.push({
-            line: lineIndex + 1,
-            column: match.index + 1,
-            text: line,
-            matchStart: match.index,
-            matchEnd: match.index + match[0].length,
-          });
-          matchCount++;
+      let pattern: RegExp;
+      try {
+        let flags = "g" + (caseSensitive ? "" : "i");
+        let query = useRegex ? searchQuery : escapeRegexFn(searchQuery);
+        if (wholeWord) {
+          query = `\\b${query}\\b`;
         }
-      });
-
-      if (matches.length > 0) {
-        const fileName = file.path.split("/").pop() || file.path;
-        searchResults.push({
-          filePath: file.path,
-          fileName,
-          matches,
-        });
+        pattern = new RegExp(query, flags);
+      } catch (e) {
+        setIsSearching(false);
+        return;
       }
+
+      for (const file of openFiles) {
+        const matches: SearchResult["matches"] = [];
+        const lines = file.content.split("\n");
+
+        lines.forEach((line, lineIndex) => {
+          let match;
+          pattern.lastIndex = 0;
+          while ((match = pattern.exec(line)) !== null) {
+            matches.push({
+              line: lineIndex + 1,
+              column: match.index + 1,
+              text: line,
+              matchStart: match.index,
+              matchEnd: match.index + match[0].length,
+            });
+            matchCount++;
+          }
+        });
+
+        if (matches.length > 0) {
+          const fileName = file.path.split("/").pop() || file.path;
+          searchResults.push({
+            filePath: file.path,
+            fileName,
+            matches,
+          });
+        }
+      }
+
+      setResults(searchResults);
+      setTotalMatches(matchCount);
+      setExpandedFiles(new Set(searchResults.map((r) => r.filePath)));
+      setIsSearching(false);
+    };
+
+    // Use requestIdleCallback if available for better performance
+    if ('requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(searchTask, { timeout: 100 });
+    } else {
+      setTimeout(searchTask, 0);
     }
+  }, [searchQuery, caseSensitive, wholeWord, useRegex, openFiles, escapeRegexFn]);
 
-    setResults(searchResults);
-    setTotalMatches(matchCount);
-    setExpandedFiles(new Set(searchResults.map((r) => r.filePath)));
-    setIsSearching(false);
-  }, [searchQuery, caseSensitive, wholeWord, useRegex, openFiles]);
-
-  // Debounced search
+  // Debounced search with longer delay and cancellation
   useEffect(() => {
-    const timer = setTimeout(performSearch, 300);
-    return () => clearTimeout(timer);
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    
+    debounceTimerRef.current = setTimeout(performSearch, 200);
+    
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
   }, [performSearch]);
 
-  // Toggle file expansion
-  const toggleFile = (filePath: string) => {
+  // Memoize toggle function
+  const toggleFile = useCallback((filePath: string) => {
     setExpandedFiles((prev) => {
       const next = new Set(prev);
       if (next.has(filePath)) {
@@ -123,31 +150,29 @@ export function SearchPanel() {
       }
       return next;
     });
-  };
+  }, []);
 
   // Navigate to match
-  const goToMatch = (filePath: string, line: number, column: number) => {
+  const goToMatch = useCallback((filePath: string, line: number, column: number) => {
     const file = openFiles.find((f) => f.path === filePath);
     if (file) {
-      // File is already open, just need to navigate
-      // This would require Monaco editor integration
+      // TODO: Navigate to specific line/column in editor
       console.log(`Navigate to ${filePath}:${line}:${column}`);
     } else {
-      openFile(filePath);
+      // TODO: Open file and navigate to line/column
+      console.log(`Would open ${filePath}:${line}:${column}`);
     }
-  };
+  }, [openFiles]);
 
   // Replace in current file
-  const replaceInFile = (filePath: string) => {
-    // Implementation would modify the file content
+  const replaceInFile = useCallback((filePath: string) => {
     console.log(`Replace in ${filePath}: "${searchQuery}" -> "${replaceQuery}"`);
-  };
+  }, [searchQuery, replaceQuery]);
 
   // Replace all
-  const replaceAll = () => {
-    // Implementation would modify all files
+  const replaceAll = useCallback(() => {
     console.log(`Replace all: "${searchQuery}" -> "${replaceQuery}"`);
-  };
+  }, [searchQuery, replaceQuery]);
 
   return (
     <div className="flex flex-col h-full">
@@ -323,8 +348,6 @@ export function SearchPanel() {
       </div>
     </div>
   );
-}
+});
 
-function escapeRegex(string: string): string {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
+// Removed escapeRegex as it's now memoized in the component

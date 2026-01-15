@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shell IDE - Education-First Development Environment</title>
     <meta name="description" content="Shell is a modern, education-focused IDE designed for students and teachers. Learn to code with powerful tools and seamless classroom integration.">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%231e1e1e'/%3E%3Cpath d='M25 50l20-20m-20 20l20 20m10-30h20' stroke='%237DD3FC' stroke-width='8' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <style>
         :root {
             --bg-primary: #1e1e1e;
@@ -15,16 +15,12 @@
             --text-secondary: #9ca3af;
             --text-muted: #6b7280;
             --accent: #7DD3FC;
-            --accent-hover: #67c8f7;
+            --green: #60b24f;
+            --green-light: #7dd36a;
             --success: #22c55e;
-            --warning: #f59e0b;
         }
         
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
@@ -33,16 +29,15 @@
             line-height: 1.6;
         }
         
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 24px;
-        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
         
-        /* Header */
         header {
-            padding: 24px 0;
+            padding: 20px 0;
             border-bottom: 1px solid var(--bg-tertiary);
+            background: var(--bg-primary);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
         
         .header-content {
@@ -59,15 +54,8 @@
             color: var(--text-primary);
         }
         
-        .logo svg {
-            width: 40px;
-            height: 40px;
-        }
-        
-        .logo-text {
-            font-size: 24px;
-            font-weight: 700;
-        }
+        .logo img { width: 44px; height: 44px; }
+        .logo-text { font-size: 26px; font-weight: 700; }
         
         .nav-links {
             display: flex;
@@ -79,84 +67,98 @@
             color: var(--text-secondary);
             text-decoration: none;
             transition: color 0.2s;
+            font-weight: 500;
         }
         
-        .nav-links a:hover {
-            color: var(--text-primary);
-        }
+        .nav-links a:hover { color: var(--text-primary); }
         
         .cta-button {
-            background-color: var(--accent);
-            color: var(--bg-primary);
-            padding: 10px 24px;
-            border-radius: 8px;
+            background-color: var(--green);
+            color: white;
+            padding: 12px 28px;
+            border-radius: 10px;
             text-decoration: none;
             font-weight: 600;
-            transition: background-color 0.2s;
+            transition: all 0.2s;
+            display: inline-block;
         }
         
         .cta-button:hover {
-            background-color: var(--accent-hover);
+            background-color: var(--green-light);
+            transform: translateY(-1px);
         }
         
-        /* Hero Section */
         .hero {
-            padding: 80px 0;
+            padding: 100px 0 80px;
             text-align: center;
         }
         
+        .hero-mascot {
+            width: 180px;
+            height: 180px;
+            margin: 0 auto 32px;
+        }
+        
         .hero h1 {
-            font-size: 56px;
-            font-weight: 700;
-            margin-bottom: 24px;
-            background: linear-gradient(135deg, var(--text-primary), var(--accent));
+            font-size: 60px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--text-primary), var(--green));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
         
         .hero p {
-            font-size: 20px;
+            font-size: 22px;
             color: var(--text-secondary);
-            max-width: 600px;
-            margin: 0 auto 40px;
+            max-width: 650px;
+            margin: 0 auto 44px;
         }
         
         .hero-buttons {
             display: flex;
             gap: 16px;
             justify-content: center;
+            flex-wrap: wrap;
         }
         
         .secondary-button {
             background-color: var(--bg-tertiary);
             color: var(--text-primary);
-            padding: 10px 24px;
-            border-radius: 8px;
+            padding: 12px 28px;
+            border-radius: 10px;
             text-decoration: none;
             font-weight: 600;
-            transition: background-color 0.2s;
+            transition: all 0.2s;
+            display: inline-block;
         }
         
-        .secondary-button:hover {
-            background-color: #4a4a4a;
-        }
+        .secondary-button:hover { background-color: #4a4a4a; }
         
-        /* Features Section */
-        .features {
-            padding: 80px 0;
-        }
+        .features { padding: 80px 0; }
         
-        .features h2 {
+        .section-title {
             text-align: center;
-            font-size: 36px;
-            margin-bottom: 48px;
+            font-size: 40px;
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+        
+        .section-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 18px;
+            margin-bottom: 56px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
         }
         
         .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 32px;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
         }
         
         .feature-card {
@@ -164,150 +166,198 @@
             padding: 32px;
             border-radius: 16px;
             border: 1px solid var(--bg-tertiary);
+            transition: all 0.2s;
+        }
+        
+        .feature-card:hover {
+            border-color: var(--green);
+            transform: translateY(-2px);
         }
         
         .feature-icon {
-            width: 48px;
-            height: 48px;
-            background-color: var(--accent);
-            border-radius: 12px;
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, var(--green), var(--green-light));
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 16px;
-            color: var(--bg-primary);
+            margin-bottom: 20px;
+            color: white;
         }
         
-        .feature-card h3 {
-            font-size: 20px;
-            margin-bottom: 8px;
+        .feature-card h3 { font-size: 20px; margin-bottom: 10px; font-weight: 600; }
+        .feature-card p { color: var(--text-secondary); line-height: 1.7; }
+        
+        .pricing {
+            padding: 100px 0;
+            background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
         }
         
-        .feature-card p {
-            color: var(--text-secondary);
-        }
-        
-        /* Tiers Section */
-        .tiers {
-            padding: 80px 0;
-            background-color: var(--bg-secondary);
-        }
-        
-        .tiers h2 {
-            text-align: center;
-            font-size: 36px;
-            margin-bottom: 48px;
-        }
-        
-        .tiers-grid {
+        .pricing-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 24px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 28px;
+            max-width: 1000px;
+            margin: 0 auto;
         }
         
-        .tier-card {
+        .pricing-card {
             background-color: var(--bg-primary);
-            padding: 32px;
-            border-radius: 16px;
-            border: 1px solid var(--bg-tertiary);
+            padding: 40px 32px;
+            border-radius: 20px;
+            border: 2px solid var(--bg-tertiary);
             text-align: center;
-        }
-        
-        .tier-card.featured {
-            border-color: var(--accent);
             position: relative;
         }
         
-        .tier-badge {
+        .pricing-card.featured {
+            border-color: var(--green);
+            transform: scale(1.02);
+        }
+        
+        .pricing-badge {
             position: absolute;
-            top: -12px;
+            top: -14px;
             left: 50%;
             transform: translateX(-50%);
-            background-color: var(--accent);
-            color: var(--bg-primary);
-            padding: 4px 16px;
-            border-radius: 16px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        
-        .tier-card h3 {
-            font-size: 24px;
-            margin-bottom: 8px;
-        }
-        
-        .tier-price {
-            font-size: 36px;
+            background: linear-gradient(135deg, var(--green), var(--green-light));
+            color: white;
+            padding: 6px 20px;
+            border-radius: 20px;
+            font-size: 13px;
             font-weight: 700;
-            color: var(--accent);
+            letter-spacing: 0.5px;
         }
         
-        .tier-price span {
-            font-size: 16px;
+        .pricing-card h3 { font-size: 26px; margin-bottom: 8px; font-weight: 700; }
+        .pricing-card .subtitle { color: var(--text-secondary); margin-bottom: 24px; font-size: 15px; }
+        
+        .pricing-amount {
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--green);
+            line-height: 1;
+        }
+        
+        .pricing-amount span {
+            font-size: 18px;
             color: var(--text-secondary);
+            font-weight: 500;
         }
         
-        .tier-features {
+        .pricing-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 16px 0 28px;
+            align-items: center;
+        }
+        
+        .pricing-toggle button {
+            background: var(--bg-tertiary);
+            border: none;
+            color: var(--text-secondary);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .pricing-toggle button.active { background: var(--green); color: white; }
+        
+        .save-badge {
+            background: var(--success);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        
+        .pricing-features {
             list-style: none;
-            margin: 24px 0;
+            margin: 28px 0;
             text-align: left;
         }
         
-        .tier-features li {
-            padding: 8px 0;
+        .pricing-features li {
+            padding: 10px 0;
             color: var(--text-secondary);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 15px;
+        }
+        
+        .pricing-features li::before {
+            content: "✓";
+            color: var(--green);
+            font-weight: bold;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        
+        .pricing-button {
+            width: 100%;
+            padding: 14px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: block;
+        }
+        
+        .pricing-button.primary { background: var(--green); color: white; border: none; }
+        .pricing-button.primary:hover { background: var(--green-light); }
+        .pricing-button.secondary { background: transparent; color: var(--text-primary); border: 2px solid var(--bg-tertiary); }
+        .pricing-button.secondary:hover { border-color: var(--green); }
+        
+        footer {
+            padding: 60px 0 40px;
+            border-top: 1px solid var(--bg-tertiary);
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 24px;
+        }
+        
+        .footer-logo {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 12px;
         }
         
-        .tier-features li::before {
-            content: "✓";
-            color: var(--success);
-            font-weight: bold;
-        }
+        .footer-logo img { width: 36px; height: 36px; }
+        .footer-logo span { font-size: 20px; font-weight: 700; }
         
-        /* Footer */
-        footer {
-            padding: 48px 0;
-            border-top: 1px solid var(--bg-tertiary);
-            text-align: center;
-        }
-        
-        .footer-links {
-            display: flex;
-            gap: 32px;
-            justify-content: center;
-            margin-bottom: 24px;
-            list-style: none;
-        }
-        
-        .footer-links a {
-            color: var(--text-secondary);
-            text-decoration: none;
-        }
-        
-        .footer-links a:hover {
-            color: var(--text-primary);
-        }
+        .footer-links { display: flex; gap: 32px; list-style: none; }
+        .footer-links a { color: var(--text-secondary); text-decoration: none; font-size: 14px; transition: color 0.2s; }
+        .footer-links a:hover { color: var(--text-primary); }
         
         .copyright {
             color: var(--text-muted);
             font-size: 14px;
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 24px;
+            border-top: 1px solid var(--bg-tertiary);
         }
         
         @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 36px;
-            }
-            
-            .nav-links {
-                display: none;
-            }
-            
-            .hero-buttons {
-                flex-direction: column;
-            }
+            .hero h1 { font-size: 40px; }
+            .hero-mascot { width: 140px; height: 140px; }
+            .nav-links { display: none; }
+            .hero-buttons { flex-direction: column; align-items: center; }
+            .pricing-card.featured { transform: none; }
+            .footer-content { flex-direction: column; text-align: center; }
         }
     </style>
 </head>
@@ -316,21 +366,18 @@
         <div class="container">
             <div class="header-content">
                 <a href="/" class="logo">
-                    <svg viewBox="0 0 100 100">
-                        <rect width="100" height="100" rx="20" fill="#1e1e1e"/>
-                        <path d="M25 50l20-20m-20 20l20 20m10-30h20" stroke="#7DD3FC" stroke-width="8" stroke-linecap="round" fill="none"/>
-                    </svg>
+                    <img src="favicon.svg" alt="Shell IDE">
                     <span class="logo-text">Shell</span>
                 </a>
                 <nav>
                     <ul class="nav-links">
                         <li><a href="#features">Features</a></li>
-                        <li><a href="#pricing">Pricing</a></li>
+                        <li><a href="#pricing">Education Plans</a></li>
                         <li><a href="https://github.com/NagusameCS/Shell">GitHub</a></li>
                         <li><a href="SECURITY.md">Security</a></li>
                     </ul>
                 </nav>
-                <a href="https://github.com/NagusameCS/Shell/releases" class="cta-button">Download</a>
+                <a href="https://github.com/NagusameCS/Shell/releases" class="cta-button">Download Free</a>
             </div>
         </div>
     </header>
@@ -338,22 +385,24 @@
     <main>
         <section class="hero">
             <div class="container">
+                <img src="favicon.svg" alt="Shelly" class="hero-mascot">
                 <h1>Code. Learn. Teach.</h1>
                 <p>Shell is a modern, education-focused IDE designed for students and teachers. Powerful development tools meet seamless classroom integration.</p>
                 <div class="hero-buttons">
                     <a href="https://github.com/NagusameCS/Shell/releases" class="cta-button">Download for Free</a>
-                    <a href="https://github.com/NagusameCS/Shell" class="secondary-button">View Source</a>
+                    <a href="https://github.com/NagusameCS/Shell" class="secondary-button">View on GitHub</a>
                 </div>
             </div>
         </section>
 
         <section id="features" class="features">
             <div class="container">
-                <h2>Built for Education</h2>
+                <h2 class="section-title">Built for Education</h2>
+                <p class="section-subtitle">Everything teachers and students need to succeed in the classroom and beyond.</p>
                 <div class="features-grid">
                     <div class="feature-card">
                         <div class="feature-icon">
-                            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
                         </div>
@@ -362,7 +411,7 @@
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">
-                            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                             </svg>
                         </div>
@@ -371,7 +420,7 @@
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">
-                            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
                         </div>
@@ -380,7 +429,7 @@
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">
-                            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
                             </svg>
                         </div>
@@ -389,7 +438,7 @@
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">
-                            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
                             </svg>
                         </div>
@@ -398,7 +447,7 @@
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">
-                            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                             </svg>
                         </div>
@@ -409,69 +458,87 @@
             </div>
         </section>
 
-        <section id="pricing" class="tiers">
+        <section id="pricing" class="pricing">
             <div class="container">
-                <h2>Simple, Transparent Pricing</h2>
-                <div class="tiers-grid">
-                    <div class="tier-card">
+                <h2 class="section-title">Education Plans</h2>
+                <p class="section-subtitle">Affordable pricing designed for educators. Students always free.</p>
+                <div class="pricing-grid">
+                    <div class="pricing-card">
                         <h3>🎓 Student</h3>
-                        <div class="tier-price">Free <span>forever</span></div>
-                        <ul class="tier-features">
-                            <li>Full IDE with LSP support</li>
+                        <p class="subtitle">For learners of all ages</p>
+                        <div class="pricing-amount">Free</div>
+                        <p style="color: var(--text-muted); margin-top: 8px; font-size: 14px;">Forever, no credit card</p>
+                        <ul class="pricing-features">
+                            <li>Full IDE with language server support</li>
                             <li>Local project management</li>
                             <li>Syntax highlighting for 30+ languages</li>
-                            <li>Integrated terminal</li>
-                            <li>Git integration</li>
-                            <li>Join classrooms</li>
+                            <li>Integrated terminal & Git</li>
+                            <li>Join classrooms with invite codes</li>
                             <li>Submit assignments</li>
+                            <li>View lesson materials</li>
                         </ul>
-                        <a href="https://github.com/NagusameCS/Shell/releases" class="secondary-button">Download Free</a>
+                        <a href="https://github.com/NagusameCS/Shell/releases" class="pricing-button secondary">Download Free</a>
                     </div>
-                    <div class="tier-card featured">
-                        <div class="tier-badge">Most Popular</div>
-                        <h3>👑 Teacher</h3>
-                        <div class="tier-price">$8 <span>/month</span></div>
-                        <ul class="tier-features">
+                    <div class="pricing-card featured">
+                        <div class="pricing-badge">FOR EDUCATORS</div>
+                        <h3>👩‍🏫 Teacher</h3>
+                        <p class="subtitle">For instructors & professors</p>
+                        <div id="teacher-price" class="pricing-amount">$9.99 <span>/month</span></div>
+                        <div class="pricing-toggle">
+                            <button id="monthly-btn" class="active" onclick="setMonthly()">Monthly</button>
+                            <button id="yearly-btn" onclick="setYearly()">Yearly</button>
+                            <span class="save-badge">Save 17%</span>
+                        </div>
+                        <ul class="pricing-features">
                             <li>Everything in Student</li>
-                            <li>Cloud project sync</li>
+                            <li>Cloud project sync & backup</li>
                             <li>Create unlimited classrooms</li>
                             <li>Custom assignments & lessons</li>
                             <li>Hosted auto-grading</li>
                             <li>Student progress analytics</li>
-                            <li>Exam mode (lockdown)</li>
-                            <li>Priority support</li>
+                            <li>Exam mode (lockdown browser)</li>
+                            <li>Priority email support</li>
                         </ul>
-                        <a href="https://github.com/NagusameCS/Shell/releases" class="cta-button">Start Free Trial</a>
-                    </div>
-                    <div class="tier-card">
-                        <h3>🏫 School</h3>
-                        <div class="tier-price">Custom</div>
-                        <ul class="tier-features">
-                            <li>Everything in Teacher</li>
-                            <li>Unlimited teachers & students</li>
-                            <li>School-wide dashboard</li>
-                            <li>SSO integration</li>
-                            <li>Custom branding</li>
-                            <li>Plagiarism detection</li>
-                            <li>Dedicated support</li>
-                        </ul>
-                        <a href="mailto:contact@shell-ide.com" class="secondary-button">Contact Sales</a>
+                        <a href="https://github.com/NagusameCS/Shell/releases" class="pricing-button primary">Start 14-Day Free Trial</a>
                     </div>
                 </div>
+                <p style="text-align: center; margin-top: 40px; color: var(--text-muted); font-size: 14px;">
+                    🏫 <strong>Schools & Districts:</strong> Need site licenses? <a href="mailto:contact@nagusame.dev" style="color: var(--green);">Contact us</a> for custom pricing.
+                </p>
             </div>
         </section>
     </main>
 
     <footer>
         <div class="container">
-            <ul class="footer-links">
-                <li><a href="https://github.com/NagusameCS/Shell">GitHub</a></li>
-                <li><a href="SECURITY.md">Security</a></li>
-                <li><a href="https://github.com/NagusameCS/Shell/issues">Report Issue</a></li>
-                <li><a href="https://github.com/NagusameCS/Shell/blob/main/LICENSE">License</a></li>
-            </ul>
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <img src="favicon.svg" alt="Shell IDE">
+                    <span>Shell</span>
+                </div>
+                <ul class="footer-links">
+                    <li><a href="https://github.com/NagusameCS/Shell">GitHub</a></li>
+                    <li><a href="SECURITY.md">Security</a></li>
+                    <li><a href="https://github.com/NagusameCS/Shell/issues">Report Issue</a></li>
+                    <li><a href="https://github.com/NagusameCS/Shell/blob/main/LICENSE">License</a></li>
+                </ul>
+            </div>
             <p class="copyright">© 2026 Shell IDE. Open source under MIT License.</p>
         </div>
     </footer>
+
+    <script>
+        function setMonthly() {
+            document.getElementById('teacher-price').innerHTML = '$9.99 <span>/month</span>';
+            document.getElementById('monthly-btn').classList.add('active');
+            document.getElementById('yearly-btn').classList.remove('active');
+        }
+        
+        function setYearly() {
+            document.getElementById('teacher-price').innerHTML = '$99.99 <span>/year</span>';
+            document.getElementById('yearly-btn').classList.add('active');
+            document.getElementById('monthly-btn').classList.remove('active');
+        }
+    </script>
 </body>
 </html>

@@ -1,3 +1,4 @@
+import { memo, useMemo, useCallback } from "react";
 import { useAppStore } from "@/stores/appStore";
 import { useEditorStore } from "@/stores/editorStore";
 import {
@@ -12,27 +13,40 @@ import {
   Save,
 } from "lucide-react";
 
-export function StatusBar() {
-  const { project, features, settings, togglePanel, panelOpen } = useAppStore();
-  const { activeFile, errors, isRunning, openFiles } = useEditorStore();
+export const StatusBar = memo(function StatusBar() {
+  // Use selectors for fine-grained subscriptions
+  const project = useAppStore((s) => s.project);
+  const features = useAppStore((s) => s.features);
+  const togglePanel = useAppStore((s) => s.togglePanel);
+  const panelOpen = useAppStore((s) => s.panelOpen);
+  
+  const errors = useEditorStore((s) => s.errors);
+  const isRunning = useEditorStore((s) => s.isRunning);
+  const openFiles = useEditorStore((s) => s.openFiles);
+  const activeFile = useEditorStore((s) => s.activeFile);
 
-  const activeFileData = useEditorStore((s) =>
-    s.openFiles.find((f) => f.path === s.activeFile)
+  // Memoize derived state
+  const activeFileData = useMemo(() => 
+    openFiles.find((f) => f.path === activeFile),
+    [openFiles, activeFile]
   );
   
-  // Count modified files
-  const modifiedCount = openFiles.filter((f) => f.modified).length;
+  // Memoize counts to prevent recalculation
+  const modifiedCount = useMemo(() => 
+    openFiles.filter((f) => f.modified).length,
+    [openFiles]
+  );
 
-  const errorCount = errors.filter((e) => e.severity === "error").length;
-  const warningCount = errors.filter((e) => e.severity === "warning").length;
-  const infoCount = errors.filter((e) => e.severity === "info").length;
+  const { errorCount, warningCount } = useMemo(() => ({
+    errorCount: errors.filter((e) => e.severity === "error").length,
+    warningCount: errors.filter((e) => e.severity === "warning").length,
+  }), [errors]);
 
-  const handleErrorsClick = () => {
+  const handleErrorsClick = useCallback(() => {
     if (!panelOpen) {
       togglePanel();
     }
-    // This would ideally switch to the problems tab
-  };
+  }, [panelOpen, togglePanel]);
 
   return (
     <div className="flex h-6 items-center justify-between border-t border-panel-border bg-shell-700 px-2 text-xs text-white/80">
@@ -124,4 +138,4 @@ export function StatusBar() {
       </div>
     </div>
   );
-}
+});

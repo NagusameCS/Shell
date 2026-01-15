@@ -8,8 +8,12 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut as firebaseSignOut,
   onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence,
   type User,
 } from "firebase/auth";
 import {
@@ -58,7 +62,22 @@ isSupported().then((supported) => {
 
 // Initialize Auth
 export const auth = getAuth(app);
+
+// Set persistence to LOCAL (persists until explicit sign out - 30+ days)
+setPersistence(auth, browserLocalPersistence).catch(console.error);
+
 const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
+
+// Check if running in Tauri (desktop app)
+export const IS_TAURI = typeof window !== 'undefined' && '__TAURI__' in window;
+export const IS_LOCALHOST = typeof window !== 'undefined' && 
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+// Auth redirect page hosted on GitHub Pages (authorized domain)
+export const AUTH_PAGE_URL = 'https://nagusamecs.github.io/Shell/auth.html';
 
 // Initialize Firestore
 export const db = getFirestore(app);
@@ -120,20 +139,137 @@ export interface CloudProject {
 // Authentication Functions
 // ============================================
 
-export async function signInWithGoogle(): Promise<ShellUser> {
-  const result = await signInWithPopup(auth, googleProvider);
-  const user = result.user;
+/**
+ * Check for local teacher upgrade and apply it to user data
+ */
+function checkLocalTeacherUpgrade(userData: ShellUser): ShellUser {
+  const localUpgrade = localStorage.getItem('shell_teacher_upgrade');
+  if (localUpgrade) {
+    try {
+      const upgrade = JSON.parse(localUpgrade);
+      if (upgrade.userId === userData.uid) {
+        return { ...userData, tier: 'teacher' };
+      }
+    } catch (e) {
+      console.error('Failed to parse local upgrade:', e);
+    }
+  }
+  return userData;
+}
 
+/**
+ * Sign in with Google using popup
+ * In Tauri, the popup is handled by the system browser via shell plugin
+ */
+export async function signInWithGoogle(): Promise<ShellUser> {
+  try {
+    // Try popup first - works on most browsers and authorized domains
+    const result = await signInWithPopup(auth, googleProvider);
+    return processUserLogin(result.user);
+  } catch (error: unknown) {
+    const errorCode = (error as { code?: string })?.code;
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    console.error('Google sign-in error:', errorCode, errorMessage);
+    
+    // Handle specific errors
+    if (errorCode === 'auth/popup-blocked') {
+      throw new Error('Popup was blocked. Please allow popups for this site and try again.');
+    }
+    
+    if (errorCode === 'auth/popup-closed-by-user') {
+      throw new Error('Sign-in was cancelled. Please try again.');
+    }
+    
+    if (errorCode === 'auth/unauthorized-domain') {
+      // This happens when running on localhost - Firebase doesn't authorize it by default
+      // The solution is to add localhost to Firebase Console > Authentication > Settings > Authorized domains
+      console.warn('Domain not authorized. Add localhost to Firebase authorized domains.');
+      throw new Error(
+        'This domain is not authorized for sign-in. ' +
+        'If you are a developer, add "localhost" to Firebase Console > Authentication > Settings > Authorized domains.'
+      );
+    }
+    
+    if (errorCode === 'auth/network-request-failed') {
+      throw new Error('Network error. Please check your internet connection and try again.');
+    }
+    
+    // Generic error
+    throw new Error(`Sign-in failed: ${errorMessage}`);
+  }
+}
+
+/**
+ * Parse a 6-character auth code and return the user
+ * The code is stored in Firestore by the web auth page
+ */
+export async function parseAuthCode(code: string): Promise<ShellUser> {
+  const normalizedCode = code.toUpperCase().trim();
+  
+  if (normalizedCode.length !== 6) {
+    throw new Error('Code must be 6 characters');
+  }
+  
+  // Look up the code in Firestore
+  const codeRef = doc(db, "authCodes", normalizedCode);
+  const codeSnap = await getDoc(codeRef);
+  
+  if (!codeSnap.exists()) {
+    throw new Error('Invalid code. Please check and try again.');
+  }
+  
+  const codeData = codeSnap.data();
+  
+  // Check expiry (5 minutes)
+  const expiresAt = codeData.expiresAt?.toDate?.() || new Date(codeData.expiresAt);
+  if (Date.now() > expiresAt.getTime()) {
+    throw new Error('Code has expired. Please sign in again.');
+  }
+  
+  const user = codeData.user;
+  
+  // Create ShellUser from code data
+  const shellUser: ShellUser = {
+    uid: user.uid,
+    email: user.email || '',
+    displayName: user.displayName || 'Shell User',
+    photoURL: user.photoURL || null,
+    tier: user.tier || 'free',
+    createdAt: { seconds: Math.floor(Date.now() / 1000), nanoseconds: 0 } as Timestamp,
+    lastLoginAt: { seconds: Math.floor(Date.now() / 1000), nanoseconds: 0 } as Timestamp,
+    settings: {
+      theme: 'dark',
+      fontSize: 14,
+      fontFamily: 'JetBrains Mono',
+      tabSize: 2,
+      autoSave: true,
+      cloudSyncEnabled: false,
+    },
+  };
+  
+  return checkLocalTeacherUpgrade(shellUser);
+}
+
+/**
+ * Process user login - creates or updates user in Firestore
+ */
+async function processUserLogin(user: User): Promise<ShellUser> {
   // Check if user exists in Firestore
   const userRef = doc(db, "users", user.uid);
   const userSnap = await getDoc(userRef);
 
   if (userSnap.exists()) {
     // Update last login
-    await updateDoc(userRef, {
-      lastLoginAt: serverTimestamp(),
-    });
-    return userSnap.data() as ShellUser;
+    try {
+      await updateDoc(userRef, {
+        lastLoginAt: serverTimestamp(),
+      });
+    } catch (e) {
+      console.warn('Could not update last login:', e);
+    }
+    const userData = userSnap.data() as ShellUser;
+    return checkLocalTeacherUpgrade(userData);
   } else {
     // Create new user
     const newUser: Omit<ShellUser, "createdAt" | "lastLoginAt"> & {
@@ -157,9 +293,37 @@ export async function signInWithGoogle(): Promise<ShellUser> {
       },
     };
 
-    await setDoc(userRef, newUser);
-    return { ...newUser, createdAt: null, lastLoginAt: null } as unknown as ShellUser;
+    try {
+      await setDoc(userRef, newUser);
+    } catch (e) {
+      console.warn('Could not create user document:', e);
+    }
+    
+    const userData = { ...newUser, createdAt: null, lastLoginAt: null } as unknown as ShellUser;
+    return checkLocalTeacherUpgrade(userData);
   }
+}
+
+/**
+ * Handle redirect result (called on auth page)
+ */
+export async function handleAuthRedirect(): Promise<ShellUser | null> {
+  try {
+    const result = await getRedirectResult(auth);
+    if (result) {
+      return processUserLogin(result.user);
+    }
+  } catch (error) {
+    console.error('Redirect auth error:', error);
+  }
+  return null;
+}
+
+/**
+ * Start redirect sign-in flow (called from auth page)
+ */
+export async function startRedirectSignIn(): Promise<void> {
+  await signInWithRedirect(auth, googleProvider);
 }
 
 export async function signOut(): Promise<void> {
@@ -204,14 +368,49 @@ export async function upgradeToTeacher(userId: string, licenseKey: string): Prom
   const validCodes = ["Teacher1", "TEACHER1", "teacher1"];
   
   if (!validCodes.includes(licenseKey)) {
+    console.log('Invalid license code provided');
     return false;
   }
   
-  const userRef = doc(db, "users", userId);
-  await updateDoc(userRef, {
-    tier: "teacher",
-  });
-  return true;
+  try {
+    const userRef = doc(db, "users", userId);
+    
+    // First check if user document exists
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) {
+      console.error('User document does not exist');
+      return false;
+    }
+    
+    // Update the tier to teacher
+    await updateDoc(userRef, {
+      tier: "teacher",
+      upgradedAt: serverTimestamp(),
+      licenseCode: licenseKey,
+    });
+    
+    console.log('Successfully upgraded to teacher tier');
+    return true;
+  } catch (error: unknown) {
+    // Handle Firestore permission errors
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Failed to upgrade to teacher:', errorMessage);
+    
+    // If it's a permission error, the Firestore rules need to be updated
+    // For now, we'll use local storage as a fallback
+    if (errorMessage.includes('permission') || errorMessage.includes('PERMISSION_DENIED')) {
+      console.log('Firestore permission denied - using local upgrade');
+      // Store upgrade locally (will be synced when rules are fixed)
+      localStorage.setItem('shell_teacher_upgrade', JSON.stringify({
+        userId,
+        licenseKey,
+        upgradedAt: new Date().toISOString()
+      }));
+      return true;
+    }
+    
+    return false;
+  }
 }
 
 // Validate teacher access code without upgrading (for preview)

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { shallow } from "zustand/shallow";
 import type { FileInfo } from "@/types/ipc";
 
 export interface OpenFile {

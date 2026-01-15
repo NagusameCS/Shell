@@ -5,13 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shell IDE - Sign In</title>
     <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <style>
         :root {
             --bg-primary: #1e1e1e;
             --bg-secondary: #252526;
+            --bg-tertiary: #3c3c3c;
             --text-primary: #ffffff;
             --text-secondary: #9ca3af;
-            --accent: #7DD3FC;
+            --text-muted: #6b7280;
+            --green: #60b24f;
+            --green-light: #7dd36a;
             --error: #ef4444;
             --success: #22c55e;
         }
@@ -31,22 +35,27 @@
         }
         
         .container {
-            max-width: 400px;
+            max-width: 420px;
             width: 100%;
             text-align: center;
         }
         
         .logo {
-            width: 80px;
-            height: 80px;
+            width: 100px;
+            height: 100px;
             margin-bottom: 24px;
         }
         
-        h1 { font-size: 28px; margin-bottom: 8px; }
+        h1 {
+            font-size: 32px;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
         
         .subtitle {
             color: var(--text-secondary);
             margin-bottom: 32px;
+            font-size: 16px;
         }
         
         .status {
@@ -54,6 +63,7 @@
             border-radius: 12px;
             margin-bottom: 24px;
             display: none;
+            font-size: 15px;
         }
         
         .status.loading {
@@ -64,25 +74,20 @@
         
         .status.error {
             display: block;
-            background-color: rgba(239, 68, 68, 0.2);
+            background-color: rgba(239, 68, 68, 0.15);
             color: var(--error);
-        }
-        
-        .status.success {
-            display: block;
-            background-color: rgba(34, 197, 94, 0.2);
-            color: var(--success);
+            border: 1px solid rgba(239, 68, 68, 0.3);
         }
         
         .spinner {
             display: inline-block;
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             border: 2px solid var(--text-secondary);
-            border-top-color: var(--accent);
+            border-top-color: var(--green);
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin-right: 8px;
+            margin-right: 10px;
             vertical-align: middle;
         }
         
@@ -92,88 +97,128 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
+            gap: 14px;
             width: 100%;
-            padding: 14px 24px;
+            padding: 16px 28px;
             background-color: white;
             color: #333;
             border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 500;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.2s;
         }
         
-        .google-button:hover { background-color: #f3f4f6; }
-        .google-button:disabled { opacity: 0.6; cursor: not-allowed; }
-        .google-button svg { width: 20px; height: 20px; }
+        .google-button:hover {
+            background-color: #f3f4f6;
+            transform: translateY(-1px);
+        }
+        
+        .google-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .google-button svg { width: 22px; height: 22px; }
         
         .info {
-            margin-top: 24px;
+            margin-top: 28px;
             font-size: 14px;
-            color: var(--text-secondary);
+            color: var(--text-muted);
+            line-height: 1.6;
         }
         
-        .token-display {
-            margin-top: 24px;
-            padding: 16px;
+        .success-card {
+            margin-top: 28px;
+            padding: 32px 24px;
             background: var(--bg-secondary);
-            border-radius: 8px;
+            border-radius: 16px;
             display: none;
+            border: 1px solid var(--bg-tertiary);
         }
         
-        .token-display.show { display: block; }
+        .success-card.show { display: block; }
         
-        .token-display h3 {
-            font-size: 14px;
-            margin-bottom: 12px;
+        .success-card h2 {
+            font-size: 20px;
+            margin-bottom: 16px;
             color: var(--success);
         }
         
-        .token-display code {
-            display: block;
-            padding: 12px;
-            background: var(--bg-primary);
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: 12px;
-            word-break: break-all;
-            color: var(--accent);
-            max-height: 100px;
-            overflow-y: auto;
-        }
-        
-        .copy-button {
-            margin-top: 12px;
-            padding: 8px 16px;
-            background: var(--accent);
-            color: var(--bg-primary);
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-        }
-        
-        .copy-button:hover { opacity: 0.9; }
-        
-        .instructions {
-            margin-top: 16px;
-            font-size: 13px;
+        .success-card p {
+            font-size: 15px;
             color: var(--text-secondary);
-            line-height: 1.5;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .code-display {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 24px 0;
+        }
+        
+        .code-char {
+            width: 48px;
+            height: 56px;
+            background: var(--bg-primary);
+            border: 2px solid var(--green);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 700;
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            color: var(--green);
+        }
+        
+        .expiry-note {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 24px 0;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--bg-tertiary);
+        }
+        
+        .divider span {
+            padding: 0 16px;
+        }
+        
+        .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+        
+        .back-link:hover {
+            color: var(--text-primary);
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <svg class="logo" viewBox="0 0 100 100">
-            <rect width="100" height="100" rx="20" fill="#252526"/>
-            <path d="M25 50l20-20m-20 20l20 20m10-30h20" stroke="#7DD3FC" stroke-width="8" stroke-linecap="round" fill="none"/>
-        </svg>
+        <img src="favicon.svg" alt="Shell IDE" class="logo">
         
         <h1>Shell IDE</h1>
-        <p class="subtitle">Sign in to continue</p>
+        <p class="subtitle">Sign in to continue to the app</p>
         
         <div id="status" class="status"></div>
         
@@ -187,15 +232,21 @@
             Sign in with Google
         </button>
         
-        <div id="tokenDisplay" class="token-display">
-            <h3>✓ Signed in successfully!</h3>
-            <p class="instructions">Copy this token and paste it in the Shell IDE app:</p>
-            <code id="tokenCode"></code>
-            <button class="copy-button" id="copyButton">Copy Token</button>
-            <p class="instructions" style="margin-top: 12px;">After pasting, you can close this window.</p>
+        <div id="successCard" class="success-card">
+            <h2>✓ Signed In!</h2>
+            <p>Enter this code in the Shell IDE app:</p>
+            <div id="codeDisplay" class="code-display"></div>
+            <p class="expiry-note">Code expires in 5 minutes</p>
         </div>
         
-        <p class="info">This page handles secure authentication for Shell IDE.</p>
+        <div class="divider"><span>or</span></div>
+        
+        <a href="index.html" class="back-link">← Back to Shell IDE website</a>
+        
+        <p class="info">
+            This page handles secure authentication for the Shell IDE desktop app.
+            Your data is encrypted and never shared.
+        </p>
     </div>
 
     <script type="module">
@@ -203,17 +254,14 @@
         import { 
             getAuth, 
             GoogleAuthProvider, 
-            signInWithPopup,
-            setPersistence,
-            browserLocalPersistence
+            signInWithRedirect,
+            getRedirectResult
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import {
             getFirestore,
             doc,
-            getDoc,
             setDoc,
-            updateDoc,
-            serverTimestamp
+            Timestamp
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -230,16 +278,13 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         
-        await setPersistence(auth, browserLocalPersistence);
-        
         const googleProvider = new GoogleAuthProvider();
         googleProvider.setCustomParameters({ prompt: 'select_account' });
         
         const statusEl = document.getElementById('status');
         const buttonEl = document.getElementById('googleButton');
-        const tokenDisplay = document.getElementById('tokenDisplay');
-        const tokenCode = document.getElementById('tokenCode');
-        const copyButton = document.getElementById('copyButton');
+        const successCard = document.getElementById('successCard');
+        const codeDisplay = document.getElementById('codeDisplay');
 
         function showStatus(message, type) {
             statusEl.textContent = message;
@@ -252,111 +297,84 @@
             buttonEl.disabled = true;
         }
 
-        async function processUserLogin(user) {
-            const userRef = doc(db, "users", user.uid);
-            const userSnap = await getDoc(userRef);
-
-            let userData;
-            if (userSnap.exists()) {
-                try {
-                    await updateDoc(userRef, { lastLoginAt: serverTimestamp() });
-                } catch (e) {
-                    console.warn('Could not update last login:', e);
-                }
-                userData = userSnap.data();
-            } else {
-                userData = {
-                    uid: user.uid,
-                    email: user.email || "",
-                    displayName: user.displayName || "Shell User",
-                    photoURL: user.photoURL,
-                    tier: "free",
-                    createdAt: serverTimestamp(),
-                    lastLoginAt: serverTimestamp(),
-                    settings: {
-                        theme: "dark",
-                        fontSize: 14,
-                        fontFamily: "JetBrains Mono",
-                        tabSize: 2,
-                        autoSave: true,
-                        cloudSyncEnabled: false,
-                    },
-                };
-                try {
-                    await setDoc(userRef, userData);
-                } catch (e) {
-                    console.warn('Could not create user document:', e);
-                }
+        function generateCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = '';
+            for (let i = 0; i < 6; i++) {
+                code += chars[Math.floor(Math.random() * chars.length)];
             }
-            return userData;
+            return code;
         }
 
-        buttonEl.addEventListener('click', async () => {
-            showLoading('Signing in...');
+        function showSuccess(code) {
+            statusEl.style.display = 'none';
+            buttonEl.style.display = 'none';
+            document.querySelector('.divider').style.display = 'none';
+            document.querySelector('.back-link').style.display = 'none';
+            document.querySelector('.info').style.display = 'none';
             
+            codeDisplay.innerHTML = code.split('').map(char => 
+                `<div class="code-char">${char}</div>`
+            ).join('');
+            
+            successCard.classList.add('show');
+        }
+
+        async function storeAuthCode(code, user) {
+            const codeRef = doc(db, "authCodes", code);
+            await setDoc(codeRef, {
+                user: {
+                    uid: user.uid,
+                    email: user.email || '',
+                    displayName: user.displayName || 'Shell User',
+                    photoURL: user.photoURL || null,
+                    tier: 'free'
+                },
+                expiresAt: Timestamp.fromDate(new Date(Date.now() + 5 * 60 * 1000)),
+                createdAt: Timestamp.now()
+            });
+        }
+
+        // Check for redirect result on page load
+        async function checkRedirectResult() {
             try {
-                const result = await signInWithPopup(auth, googleProvider);
-                const user = result.user;
+                showLoading('Checking sign-in status...');
+                const result = await getRedirectResult(auth);
                 
-                showLoading('Setting up your account...');
-                const shellUser = await processUserLogin(user);
-                
-                // Get the ID token to send back to the app
-                const idToken = await user.getIdToken();
-                
-                // Create auth data object
-                const authData = {
-                    token: idToken,
-                    user: {
-                        uid: user.uid,
-                        email: user.email,
-                        displayName: user.displayName,
-                        photoURL: user.photoURL,
-                        tier: shellUser.tier || 'free'
-                    },
-                    expiresAt: Date.now() + (30 * 24 * 60 * 60 * 1000) // 30 days
-                };
-                
-                const encodedData = btoa(JSON.stringify(authData));
-                
-                // Show success and token
-                statusEl.style.display = 'none';
-                buttonEl.style.display = 'none';
-                tokenDisplay.classList.add('show');
-                tokenCode.textContent = encodedData;
-                
-                // Copy button
-                copyButton.addEventListener('click', async () => {
-                    try {
-                        await navigator.clipboard.writeText(encodedData);
-                        copyButton.textContent = 'Copied!';
-                        setTimeout(() => {
-                            copyButton.textContent = 'Copy Token';
-                        }, 2000);
-                    } catch (e) {
-                        // Fallback
-                        tokenCode.select();
-                        document.execCommand('copy');
-                        copyButton.textContent = 'Copied!';
-                    }
-                });
-                
-            } catch (error) {
-                console.error('Sign-in error:', error);
-                
-                let errorMessage = 'Failed to sign in. Please try again.';
-                if (error.code === 'auth/popup-closed-by-user') {
-                    errorMessage = 'Sign-in cancelled.';
-                } else if (error.code === 'auth/popup-blocked') {
-                    errorMessage = 'Popup blocked. Please allow popups.';
-                } else if (error.code === 'auth/network-request-failed') {
-                    errorMessage = 'Network error. Check your connection.';
+                if (result && result.user) {
+                    showLoading('Generating your code...');
+                    const code = generateCode();
+                    await storeAuthCode(code, result.user);
+                    showSuccess(code);
+                    return true;
                 }
                 
-                showStatus(errorMessage, 'error');
+                // No redirect result, show the button
+                statusEl.style.display = 'none';
+                buttonEl.disabled = false;
+                return false;
+            } catch (error) {
+                console.error('Redirect result error:', error);
+                showStatus('Sign-in failed: ' + error.message, 'error');
+                buttonEl.disabled = false;
+                return false;
+            }
+        }
+
+        // Handle button click - redirect to Google
+        buttonEl.addEventListener('click', async () => {
+            showLoading('Redirecting to Google...');
+            try {
+                await signInWithRedirect(auth, googleProvider);
+            } catch (error) {
+                console.error('Redirect error:', error);
+                showStatus('Failed to start sign-in: ' + error.message, 'error');
                 buttonEl.disabled = false;
             }
         });
+
+        // Check for redirect result on page load
+        checkRedirectResult();
     </script>
 </body>
 </html>

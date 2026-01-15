@@ -1,8 +1,22 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+// Memoization cache for cn function to avoid recalculating same class combinations
+const cnCache = new Map<string, string>();
+
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+  const key = JSON.stringify(inputs);
+  if (cnCache.has(key)) {
+    return cnCache.get(key)!;
+  }
+  const result = twMerge(clsx(inputs));
+  // Limit cache size to prevent memory leaks
+  if (cnCache.size > 1000) {
+    const firstKey = cnCache.keys().next().value;
+    if (firstKey) cnCache.delete(firstKey);
+  }
+  cnCache.set(key, result);
+  return result;
 }
 
 /**
@@ -17,97 +31,101 @@ export function formatFileSize(bytes: number): string {
 }
 
 /**
- * Get file extension from path
+ * Get file extension from path - optimized with direct split
  */
 export function getFileExtension(path: string): string {
-  const parts = path.split(".");
-  return parts.length > 1 ? parts[parts.length - 1] : "";
+  const lastDot = path.lastIndexOf(".");
+  return lastDot > path.lastIndexOf("/") ? path.slice(lastDot + 1) : "";
 }
 
 /**
- * Get filename from path
+ * Get filename from path - optimized
  */
 export function getFileName(path: string): string {
-  const parts = path.split("/");
-  return parts[parts.length - 1] || "";
+  const lastSlash = path.lastIndexOf("/");
+  return lastSlash >= 0 ? path.slice(lastSlash + 1) : path;
 }
 
+// Pre-computed extension to language map for O(1) lookups
+const EXTENSION_TO_LANGUAGE: Record<string, string> = {
+  py: "python",
+  js: "javascript",
+  ts: "typescript",
+  jsx: "javascript",
+  tsx: "typescript",
+  rs: "rust",
+  go: "go",
+  java: "java",
+  c: "c",
+  cpp: "cpp",
+  h: "c",
+  hpp: "cpp",
+  rb: "ruby",
+  php: "php",
+  cs: "csharp",
+  swift: "swift",
+  kt: "kotlin",
+  scala: "scala",
+  r: "r",
+  sql: "sql",
+  html: "html",
+  css: "css",
+  scss: "scss",
+  less: "less",
+  json: "json",
+  yaml: "yaml",
+  yml: "yaml",
+  xml: "xml",
+  md: "markdown",
+  sh: "shell",
+  bash: "shell",
+  zsh: "shell",
+  toml: "toml",
+  ini: "ini",
+};
+
 /**
- * Get language from file extension
+ * Get language from file extension - optimized with pre-computed map
  */
 export function getLanguageFromExtension(ext: string): string {
-  const map: Record<string, string> = {
-    py: "python",
-    js: "javascript",
-    ts: "typescript",
-    jsx: "javascript",
-    tsx: "typescript",
-    rs: "rust",
-    go: "go",
-    java: "java",
-    c: "c",
-    cpp: "cpp",
-    h: "c",
-    hpp: "cpp",
-    rb: "ruby",
-    php: "php",
-    cs: "csharp",
-    swift: "swift",
-    kt: "kotlin",
-    scala: "scala",
-    r: "r",
-    sql: "sql",
-    html: "html",
-    css: "css",
-    scss: "scss",
-    less: "less",
-    json: "json",
-    yaml: "yaml",
-    yml: "yaml",
-    xml: "xml",
-    md: "markdown",
-    sh: "shell",
-    bash: "shell",
-    zsh: "shell",
-    toml: "toml",
-    ini: "ini",
-  };
-  return map[ext.toLowerCase()] || "plaintext";
+  return EXTENSION_TO_LANGUAGE[ext.toLowerCase()] || "plaintext";
 }
 
+// Pre-computed language to Monaco map for O(1) lookups
+const LANGUAGE_TO_MONACO: Record<string, string> = {
+  javascript: "javascript",
+  typescript: "typescript",
+  python: "python",
+  rust: "rust",
+  go: "go",
+  java: "java",
+  c: "c",
+  cpp: "cpp",
+  csharp: "csharp",
+  ruby: "ruby",
+  php: "php",
+  swift: "swift",
+  kotlin: "kotlin",
+  scala: "scala",
+  r: "r",
+  sql: "sql",
+  html: "html",
+  css: "css",
+  scss: "scss",
+  less: "less",
+  json: "json",
+  yaml: "yaml",
+  xml: "xml",
+  markdown: "markdown",
+  shell: "shell",
+  plaintext: "plaintext",
+};
+
 /**
- * Get Monaco language ID from language name
+ * Get Monaco language ID from language name - optimized with pre-computed map
  */
 export function getMonacoLanguage(language: string): string {
-  const map: Record<string, string> = {
-    javascript: "javascript",
-    typescript: "typescript",
-    python: "python",
-    rust: "rust",
-    go: "go",
-    java: "java",
-    c: "c",
-    cpp: "cpp",
-    csharp: "csharp",
-    ruby: "ruby",
-    php: "php",
-    swift: "swift",
-    kotlin: "kotlin",
-    scala: "scala",
-    r: "r",
-    sql: "sql",
-    html: "html",
-    css: "css",
-    scss: "scss",
-    less: "less",
-    json: "json",
-    yaml: "yaml",
-    xml: "xml",
-    markdown: "markdown",
-    shell: "shell",
-    plaintext: "plaintext",
-  };
-  return map[language] || "plaintext";
+  return LANGUAGE_TO_MONACO[language] || "plaintext";
 }
 
 /**

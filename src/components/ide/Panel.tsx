@@ -17,13 +17,10 @@ import {
   GitBranch,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { TestCase as IPCTestCase } from "@/types/ipc";
 
-interface TestCase {
-  id: string;
-  name: string;
-  input: string;
-  expectedOutput: string;
-  hidden: boolean;
+// Extended local test case with result data
+interface TestCase extends IPCTestCase {
   passed?: boolean;
   actualOutput?: string;
 }
@@ -36,8 +33,8 @@ export function Panel() {
     useEditorStore();
   const { togglePanel, lesson } = useAppStore();
 
-  // Get test cases from current lesson
-  const testCases: TestCase[] = lesson?.test_cases || [];
+  // Get test cases from current lesson's grading config
+  const testCases: TestCase[] = lesson?.grading?.local_tests || [];
   const visibleTests = testCases.filter((t) => !t.hidden);
   const hiddenTests = testCases.filter((t) => t.hidden);
 
@@ -268,7 +265,7 @@ export function Panel() {
                           <div>
                             <div className="text-muted-foreground mb-1">Expected:</div>
                             <pre className="bg-black/20 rounded p-2 whitespace-pre-wrap">
-                              {test.expectedOutput}
+                              {test.expected_output}
                             </pre>
                           </div>
                         </div>

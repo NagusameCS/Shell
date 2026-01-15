@@ -110,9 +110,9 @@ export function useHotkeys() {
       ctrl: true,
       handler: () => {
         if (tabs.length > 1 && activeTabId) {
-          const currentIndex = tabs.findIndex((t) => t.id === activeTabId);
+          const currentIndex = tabs.findIndex((t) => t.path === activeTabId);
           const nextIndex = (currentIndex + 1) % tabs.length;
-          setActiveTab(tabs[nextIndex].id);
+          setActiveTab(tabs[nextIndex].path);
         }
       },
       description: "Next tab",
@@ -123,9 +123,9 @@ export function useHotkeys() {
       shift: true,
       handler: () => {
         if (tabs.length > 1 && activeTabId) {
-          const currentIndex = tabs.findIndex((t) => t.id === activeTabId);
+          const currentIndex = tabs.findIndex((t) => t.path === activeTabId);
           const prevIndex = (currentIndex - 1 + tabs.length) % tabs.length;
-          setActiveTab(tabs[prevIndex].id);
+          setActiveTab(tabs[prevIndex].path);
         }
       },
       description: "Previous tab",

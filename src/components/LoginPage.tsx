@@ -3,41 +3,122 @@
  *
  * Features:
  * - Google Sign-In via Firebase
- * - Shelly2 mascot (cropped, 2x scale, bright blue bg)
- * - Class code step after sign-in for students joining a class
- * - Solid colors, no gradients, no glow
+ * - Simple code-based sign-in for desktop app
+ * - Shelly2 mascot
+ * - Class code step after sign-in
+ * - 30-day session persistence
  */
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Shelly2Container } from "./Shelly2";
-import { signInWithGoogle, joinClassroom } from "../lib/firebase";
+import { signInWithGoogle, joinClassroom, AUTH_PAGE_URL, parseAuthCode } from "../lib/firebase";
 import type { ShellUser } from "../lib/firebase";
+
+// Check if running in Tauri
+const IS_TAURI = typeof window !== 'undefined' && '__TAURI__' in window;
 
 interface LoginPageProps {
   onLoginSuccess: (user: ShellUser) => void;
 }
 
-type Step = "login" | "classCode";
+type Step = "login" | "code" | "classCode";
 
 export function LoginPage({ onLoginSuccess }: LoginPageProps) {
   const [step, setStep] = useState<Step>("login");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [classCode, setClassCode] = useState("");
+  const [authCode, setAuthCode] = useState("");
   const [pendingUser, setPendingUser] = useState<ShellUser | null>(null);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Auto-focus first input when showing code step
+  useEffect(() => {
+    if (step === "code" && inputRefs.current[0]) {
+      inputRefs.current[0].focus();
+    }
+  }, [step]);
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     setError(null);
 
+    // In Tauri, open the auth page in the default browser
+    if (IS_TAURI) {
+      try {
+        const { open } = await import('@tauri-apps/plugin-shell');
+        await open(AUTH_PAGE_URL);
+        // Show code input step
+        setStep("code");
+        setIsLoading(false);
+      } catch (err) {
+        console.error("Failed to open browser:", err);
+        setError("Failed to open browser. Please try again.");
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // In browser, try direct sign-in
     try {
       const user = await signInWithGoogle();
-      // After sign-in, ask if they have a class code
       setPendingUser(user);
       setStep("classCode");
     } catch (err) {
       console.error("Sign-in error:", err);
-      setError("Failed to sign in. Please try again.");
+      const errorMessage = err instanceof Error ? err.message : "Failed to sign in. Please try again.";
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCodeChange = (index: number, value: string) => {
+    // Only allow alphanumeric
+    const char = value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(-1);
+    
+    const newCode = authCode.split('');
+    newCode[index] = char;
+    const combined = newCode.join('').slice(0, 6);
+    setAuthCode(combined);
+    
+    // Auto-advance to next input
+    if (char && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+    
+    // Auto-submit when complete
+    if (combined.length === 6) {
+      handleCodeSubmit(combined);
+    }
+  };
+
+  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && !authCode[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleCodeSubmit = async (code?: string) => {
+    const codeToUse = code || authCode;
+    if (codeToUse.length !== 6) {
+      setError("Please enter the 6-character code.");
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const user = await parseAuthCode(codeToUse);
+      setPendingUser(user);
+      setStep("classCode");
+    } catch (err) {
+      console.error("Code sign-in error:", err);
+      const errorMessage = err instanceof Error ? err.message : "Invalid code. Please try again.";
+      setError(errorMessage);
+      setAuthCode("");
+      inputRefs.current[0]?.focus();
     } finally {
       setIsLoading(false);
     }
@@ -111,7 +192,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
 
           {/* Error message */}
           {error && (
-            <div className="rounded-lg bg-[#ef4444]/20 px-4 py-2 text-sm text-[#ef4444]">
+            <div className="max-w-sm rounded-lg bg-[#ef4444]/20 px-4 py-2 text-sm text-[#ef4444]">
               {error}
             </div>
           )}
@@ -142,7 +223,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
               />
             </svg>
             <span className="font-medium">
-              {isLoading ? "Signing in..." : "Sign in with Google"}
+              {isLoading ? "Opening browser..." : "Sign in with Google"}
             </span>
           </button>
 
@@ -180,6 +261,85 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
     );
   }
 
+  // Code input step (for Tauri app)
+  if (step === "code") {
+    return (
+      <div className="flex h-screen w-screen flex-col items-center justify-center bg-[#1e1e1e]">
+        <div className="flex w-full max-w-md flex-col items-center space-y-6 px-4">
+          {/* Shelly2 mascot */}
+          <Shelly2Container size={120} />
+
+          {/* Instructions */}
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-white">
+              Enter Sign-In Code
+            </h1>
+            <p className="mt-2 text-sm text-[#9ca3af]">
+              Complete sign-in in your browser, then enter<br />
+              the 6-character code shown.
+            </p>
+          </div>
+
+          {/* Error message */}
+          {error && (
+            <div className="w-full rounded-lg bg-[#ef4444]/20 px-4 py-2 text-center text-sm text-[#ef4444]">
+              {error}
+            </div>
+          )}
+
+          {/* Code input - 6 boxes */}
+          <div className="flex gap-2">
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+              <input
+                key={i}
+                ref={(el) => { inputRefs.current[i] = el; }}
+                type="text"
+                maxLength={1}
+                value={authCode[i] || ''}
+                onChange={(e) => handleCodeChange(i, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(i, e)}
+                disabled={isLoading}
+                className="h-14 w-12 rounded-lg bg-[#252526] text-center text-2xl font-mono font-bold text-white outline-none focus:ring-2 focus:ring-[#60b24f] disabled:opacity-50"
+              />
+            ))}
+          </div>
+
+          {/* Actions */}
+          <div className="flex w-full flex-col gap-2">
+            <button
+              onClick={() => handleCodeSubmit()}
+              disabled={isLoading || authCode.length !== 6}
+              className="w-full rounded-lg bg-[#60b24f] px-4 py-3 font-medium text-white hover:bg-[#7dd36a] disabled:opacity-50"
+            >
+              {isLoading ? "Verifying..." : "Continue"}
+            </button>
+            <button
+              onClick={() => {
+                setStep("login");
+                setAuthCode("");
+                setError(null);
+              }}
+              disabled={isLoading}
+              className="w-full rounded-lg bg-[#3c3c3c] px-4 py-3 text-[#9ca3af] hover:bg-[#4a4a4a] hover:text-white"
+            >
+              Back
+            </button>
+          </div>
+
+          {/* Help text */}
+          <p className="text-center text-xs text-[#6b7280]">
+            Didn't see a browser? <button 
+              onClick={handleGoogleSignIn}
+              className="underline hover:text-white"
+            >
+              Try again
+            </button>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Class code step
   return (
     <div className="flex h-screen w-screen flex-col items-center justify-center bg-[#1e1e1e]">
@@ -208,7 +368,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
             value={classCode}
             onChange={(e) => setClassCode(e.target.value.toUpperCase())}
             placeholder="Enter class code (e.g., ABC123)"
-            className="w-full rounded-lg bg-[#252526] px-4 py-3 text-center text-lg font-mono tracking-widest text-white placeholder-[#6b7280] outline-none focus:ring-2 focus:ring-[#7DD3FC]"
+            className="w-full rounded-lg bg-[#252526] px-4 py-3 text-center text-lg font-mono tracking-widest text-white placeholder-[#6b7280] outline-none focus:ring-2 focus:ring-[#60b24f]"
             maxLength={6}
             autoFocus
             onKeyDown={(e) => {
@@ -224,7 +384,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
           <button
             onClick={handleJoinClass}
             disabled={isLoading || !classCode.trim()}
-            className="w-full rounded-lg bg-[#7DD3FC] px-4 py-3 font-medium text-[#1e1e1e] hover:bg-[#67c8f7] disabled:opacity-50"
+            className="w-full rounded-lg bg-[#60b24f] px-4 py-3 font-medium text-white hover:bg-[#7dd36a] disabled:opacity-50"
           >
             {isLoading ? "Joining..." : "Join Class"}
           </button>

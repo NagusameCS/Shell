@@ -19,16 +19,22 @@ mod fs;
 mod security;
 mod services;
 
+use std::sync::{Arc, RwLock};
 use tauri::Manager;
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 fn main() {
-    // Initialize logging
+    // Initialize logging with optimized filter
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "shell_ide=debug,tauri=info".into()),
+                .unwrap_or_else(|_| {
+                    #[cfg(debug_assertions)]
+                    { "shell_ide=debug,tauri=info".into() }
+                    #[cfg(not(debug_assertions))]
+                    { "shell_ide=warn,tauri=warn".into() }
+                }),
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
@@ -49,11 +55,15 @@ fn main() {
             let db = db::Database::init(&app_data)?;
             app.manage(db);
 
-            // Initialize feature flags
+            // Initialize feature flags with RwLock for thread-safe read/write
             let features = features::FeatureFlags::load(&app_data);
-            app.manage(features);
+            app.manage(RwLock::new(features));
 
-            // Initialize Docker manager
+            // Initialize shared security policy (cached, not recreated per request)
+            let security_policy = Arc::new(security::SecurityPolicy::default());
+            app.manage(security_policy);
+
+            // Initialize Docker manager (lazy connection)
             let docker = docker::DockerManager::new();
             app.manage(docker);
 
