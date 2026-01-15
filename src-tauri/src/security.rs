@@ -64,8 +64,12 @@ impl Default for SecurityPolicy {
     fn default() -> Self {
         Self {
             allowed_paths: vec![
+                // Home directory (user's personal files)
+                dirs::home_dir().unwrap_or_else(|| PathBuf::from(".")),
+                // Also explicitly allow common project directories
                 dirs::document_dir().unwrap_or_else(|| PathBuf::from(".")),
-                dirs::home_dir().map(|p| p.join("Projects")).unwrap_or_else(|| PathBuf::from(".")),
+                dirs::desktop_dir().unwrap_or_else(|| PathBuf::from(".")),
+                dirs::download_dir().unwrap_or_else(|| PathBuf::from(".")),
             ],
             denied_paths: vec![
                 PathBuf::from("/etc"),

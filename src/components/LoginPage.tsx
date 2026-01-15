@@ -10,7 +10,6 @@
  */
 
 import { useState, useEffect, useRef } from "react";
-import { Shelly2Container } from "./Shelly2";
 import { signInWithGoogle, joinClassroom, AUTH_PAGE_URL, parseAuthCode } from "../lib/firebase";
 import type { ShellUser } from "../lib/firebase";
 
@@ -179,8 +178,8 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
     return (
       <div className="flex h-screen w-screen flex-col items-center justify-center bg-[#1e1e1e]">
         <div className="flex flex-col items-center space-y-6">
-          {/* Shelly2 mascot */}
-          <Shelly2Container size={200} />
+          {/* Shell logo */}
+          <img src="/favicon.svg" alt="Shell" className="h-32 w-32" />
 
           {/* App name and tagline */}
           <div className="text-center">

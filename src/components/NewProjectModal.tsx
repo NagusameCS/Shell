@@ -740,10 +740,11 @@ export function NewProjectModal({
     } catch (err) {
       console.error("Failed to create project:", err);
       const errorMessage = err instanceof Error ? err.message : String(err);
-      if (errorMessage.includes("permission") || errorMessage.includes("denied")) {
-        setError("Permission denied. Please choose a different folder.");
-      } else if (errorMessage.includes("exists")) {
-        setError("A project with this name already exists.");
+      const lowerError = errorMessage.toLowerCase();
+      if (lowerError.includes("permission denied") || lowerError.includes("access denied")) {
+        setError("Permission denied. Please choose a different folder or check folder permissions.");
+      } else if (lowerError.includes("already exists") || lowerError.includes("file exists")) {
+        setError("A project with this name already exists. Please choose a different name.");
       } else {
         setError(`Failed to create project: ${errorMessage}`);
       }
